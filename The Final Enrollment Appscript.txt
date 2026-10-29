@@ -1,0 +1,580 @@
+// ============================================================
+// SHINE CRAFT TECHNOLOGY
+// File: JobApplication.gs  — FIXED VERSION
+//
+// BUGS FIXED:
+//   ❌ BUG 1 (CRITICAL): getActiveSpreadsheet() used inside doPost()
+//      → In a Web App execution there is no "active" spreadsheet.
+//        getActiveSpreadsheet() returns null, causing the entire
+//        form submission handler to crash before appendRow() ever runs.
+//        Result: form shows an error, nothing is saved to the sheet.
+//      ✅ FIX: replaced with openById(SOURCE_SHEET_ID) which always
+//        resolves to the correct spreadsheet regardless of context.
+//
+//   ❌ BUG 2 (STABILITY): No header row written on first use.
+//      → If the Responses tab is empty, the first submission writes
+//        data with no header row, making the sheet hard to read and
+//        breaking any automation that relies on column names.
+//      ✅ FIX: Added _ensureHeaders() which checks row 1 and writes
+//        the full header row automatically if the sheet is empty.
+//        Safe to call every time — skips writing if headers exist.
+//
+// AFTER PASTING THIS FILE:
+//   1. Deploy → Manage deployments → pencil icon
+//   2. Select "New version" in the Version dropdown
+//   3. Click Deploy
+//   4. Submit a test form from your live website
+//   5. Check the Responses tab — row should appear immediately
+// ============================================================
+
+
+// ─────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────
+
+const SHEET_NAME       = "Responses";
+const PARENT_FOLDER_ID = "16Do7eruiIA1pCEeHQWXmTfhfsvRhTxeg";
+
+const MAX_FILE_SIZE_MB   = 15;
+const MAX_TOTAL_FILES    = 20;
+const MAX_BASE64_LENGTH  = MAX_FILE_SIZE_MB * 1024 * 1024 * 1.37;
+const RATE_LIMIT_SECONDS = 10;
+
+// ── Mirror config ─────────────────────────────────────────────
+const SOURCE_SHEET_ID   = "1BQ7tzvZxmgGyUFFW8WWMLxge0iv3r4PT_ghiDw2qbPs";
+const SOURCE_SHEET_NAME = "Responses";
+const MIRROR_SHEET_ID   = "1ktJL_sLh3GX6WVURlu9Eeoc_lmCOfl7_FDep0ytmsnc";
+const MIRROR_SHEET_NAME = "job recuritment";
+
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+
+function sanitizeText(str) {
+  if (!str) return "";
+  return String(str).replace(/[<>]/g, "").trim();
+}
+
+function checkRateLimit(key) {
+  const cache = CacheService.getScriptCache();
+  const last  = cache.get(key);
+  if (last) throw new Error("Too many requests. Please wait a few seconds.");
+  cache.put(key, "1", RATE_LIMIT_SECONDS);
+}
+
+// ✅ NEW — writes header row to Responses tab if it is empty.
+//    Called at the start of every form submission so the sheet
+//    is always readable even on the very first submission.
+function _ensureHeaders(sheet) {
+  if (!sheet) return; // safety guard
+  try {
+    const firstCell = sheet.getRange(1, 1).getValue();
+    if (firstCell !== "") return; // headers already exist
+  } catch(e) {
+    // sheet is empty or unreadable — proceed to write headers
+  }
+
+  const headers = [
+    "Timestamp",
+    "Full Name",
+    "Full Address",
+    "City",
+    "State",
+    "ZIP Code",
+    "Primary Phone",
+    "Email",
+    "Birth Date",
+    "Gender",
+    "Upload Proof Files",
+    "LinkedIn Profile URL",
+    "GitHub Profile URL",
+    "Personal Portfolio Website URL",
+    "Upload Resume",
+    "Willing to Relocate",
+    "Notice Period",
+    "Current CTC",
+    "Expected CTC",
+    "Immediate Joiner",
+    "Job You Are Applying For",
+    "Why Are You Interested in This Role",
+    "Relevant Experience for This Role",
+    "Key Skills That Make You Suitable",
+    "Your Understanding of This Role",
+    "Examples of Work Related to This Role",
+    "Strengths Relevant to This Role",
+    "Areas You Are Currently Improving",
+    "Anything Else You Want Us to Know",
+    "Why Are You Looking For Change",
+    "Where Do You Want To Be In",
+    "Primary Reasons For Seeking New Opportunity",
+    "Commitment Maintained For More Than One Year",
+    "Leave Company Within First Six Months",
+    "Left Role Or Project Before Completion",
+    "Employment Type",
+    "Organization Name (Fresher)",
+    "Designation (Fresher)",
+    "Duration From (Fresher)",
+    "Duration To (Fresher)",
+    "Stipend (Fresher)",
+    "Description (Fresher)",
+    "Organization Name (Experienced)",
+    "Organization Location (Experienced)",
+    "Work Mode (Experienced)",
+    "Designation (Experienced)",
+    "Current Employment Status (Experienced)",
+    "Service Period From (Experienced)",
+    "Service Period To (Experienced)",
+    "Last Company CTC (Experienced)",
+    "Payslip Upload (Experienced)",
+    "Experience Certificate (Experienced)",
+    "Education Level",
+    "Field of Study",
+    "Institution Name",
+    "Location",
+    "Passing Year",
+    "Grade / Percentage",
+    "Primary Skills",
+    "Secondary Skills",
+    "Tools / Technologies",
+    "Programming Languages",
+    "Certifications",
+    "Languages Known",
+    "Why Should We Hire You",
+    "Life Story & Journey",
+    "Difficult Problems & Solutions",
+    "Decisions & Transitions",
+    "Ownership & Responsibility",
+    "Biggest Failure and What You Learned",
+    "A Time You Disagreed with Your Manager",
+    "What Motivates You Beyond Salary",
+    "Where Do You See Yourself in 5 Years",
+  ];
+
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
+  sheet.setFrozenRows(1);
+  Logger.log('[JobApp] Header row written to Responses tab.');
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// ROUTES
+// ─────────────────────────────────────────────────────────────
+
+function doGet(e) {
+  return HtmlService.createHtmlOutput("OK");
+}
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+
+    // =========================================================
+    // CASE 1 — FILE UPLOAD
+    // =========================================================
+    if (data.action === "uploadFiles") {
+
+      if (!data.userName) {
+        throw new Error("Invalid request: missing user name");
+      }
+
+      const userKey = "upload_" + (e.parameter?.ip || "unknown");
+      checkRateLimit(userKey);
+
+      const userName         = sanitizeText(data.userName);
+      const files            = data.files || [];
+      const existingFolderId = data.folderId || null;
+
+      if (files.length > MAX_TOTAL_FILES) {
+        throw new Error("Too many files uploaded at once");
+      }
+
+      const parentFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
+
+      let submissionFolder;
+      if (existingFolderId) {
+        submissionFolder = DriveApp.getFolderById(existingFolderId);
+      } else {
+        const timestamp  = Utilities.formatDate(
+          new Date(),
+          Session.getScriptTimeZone(),
+          "yyyy-MM-dd_HH-mm-ss"
+        );
+        const uniqueId   = Utilities.getUuid().slice(0, 8);
+        const folderName = userName + "_" + timestamp + "_" + uniqueId;
+        submissionFolder = parentFolder.createFolder(folderName);
+      }
+
+      const uploadedLinks = [];
+
+      files.forEach(function (fileObj) {
+        try {
+          if (!fileObj.data || !fileObj.name) return;
+
+          if (fileObj.data.length > MAX_BASE64_LENGTH) {
+            throw new Error("File too large: " + fileObj.name);
+          }
+
+          const safeName = sanitizeText(fileObj.name);
+          const fileBlob = Utilities.newBlob(
+            Utilities.base64Decode(fileObj.data),
+            fileObj.mimeType || "application/octet-stream",
+            safeName
+          );
+
+          const created = submissionFolder.createFile(fileBlob);
+          created.setSharing(
+            DriveApp.Access.ANYONE_WITH_LINK,
+            DriveApp.Permission.VIEW
+          );
+
+          uploadedLinks.push(created.getUrl());
+
+        } catch (fileErr) {
+          Logger.log("[JobApp] File upload error: " + fileErr.message);
+        }
+      });
+
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          success:  true,
+          links:    uploadedLinks,
+          folderId: submissionFolder.getId()
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // =========================================================
+    // CASE 2 — FORM SUBMISSION (writes to Google Sheets)
+    // =========================================================
+    if (data.fullName || data.email) {
+
+      if (!data.fullName || !data.email) {
+        throw new Error("Invalid form submission: missing fullName or email");
+      }
+
+      data.fullName = sanitizeText(data.fullName);
+      data.email    = sanitizeText(data.email);
+
+      // ✅ FIXED: was getActiveSpreadsheet() — crashes in Web App context
+      //           because there is no active spreadsheet during a POST request.
+      //           Now uses openById(SOURCE_SHEET_ID) which always works.
+      const ss         = SpreadsheetApp.openById(SOURCE_SHEET_ID);
+      const allTabs    = ss.getSheets().map(function(s){ return s.getName(); });
+      Logger.log('[JobApp] Available tabs: ' + allTabs.join(', '));
+
+      const sheet = ss.getSheetByName(SHEET_NAME);
+
+      if (!sheet) {
+        throw new Error('Tab "' + SHEET_NAME + '" not found. Available tabs: ' + allTabs.join(', '));
+      }
+
+      // ✅ ensure header row exists before writing any data
+      _ensureHeaders(sheet);
+
+      // ── Proof files (Step 1) ──────────────────────────────
+      const proofLinks = (data.proofFiles || []).join("\n");
+
+      // ── Resume (Step 2) ───────────────────────────────────
+      const resumeLink = data.resumeLink || "";
+
+      // ── Employment (Step 4) ───────────────────────────────
+      const employmentType = data.employmentType || "";
+      const employment     = data.employment || [];
+
+      let fresherOrg         = "";
+      let fresherDesignation = "";
+      let fresherFrom        = "";
+      let fresherTo          = "";
+      let fresherStipend     = "";
+      let fresherDescription = "";
+
+      let expOrg            = "";
+      let expLocation       = "";
+      let expWorkMode       = "";
+      let expDesignation    = "";
+      let expStatus         = "";
+      let expFrom           = "";
+      let expTo             = "";
+      let expCTC            = "";
+      let expPayslipLinks   = "";
+      let expExpCertLinks   = "";
+
+      if (employmentType === "fresher") {
+        fresherOrg         = employment.map(e => e.organization  || "").join("\n\n");
+        fresherDesignation = employment.map(e => e.designation   || "").join("\n\n");
+        fresherFrom        = employment.map(e => e.from          || "").join("\n\n");
+        fresherTo          = employment.map(e => e.to            || "").join("\n\n");
+        fresherStipend     = employment.map(e => e.stipend       || "").join("\n\n");
+        fresherDescription = employment.map(e => e.description   || "").join("\n\n");
+
+      } else if (employmentType === "experienced") {
+        expOrg          = employment.map(e => e.organization     || "").join("\n\n");
+        expLocation     = employment.map(e => e.location         || "").join("\n\n");
+        expWorkMode     = employment.map(e => e.workMode         || "").join("\n\n");
+        expDesignation  = employment.map(e => e.designation      || "").join("\n\n");
+        expStatus       = employment.map(e => e.employmentStatus || "").join("\n\n");
+        expFrom         = employment.map(e => e.from             || "").join("\n\n");
+        expTo           = employment.map(e => e.to               || "").join("\n\n");
+        expCTC          = employment.map(e => e.ctc              || "").join("\n\n");
+        expPayslipLinks = employment.map(e => (e.payslipLinks    || []).join(", ")).join("\n\n");
+        expExpCertLinks = employment.map(e => (e.experienceLinks || []).join(", ")).join("\n\n");
+      }
+
+      // ── Education (Step 5) ────────────────────────────────
+      const education   = data.education || [];
+      const eduLevels   = education.map(e => e.level       || "").join("\n\n");
+      const eduFields   = education.map(e => e.field       || "").join("\n\n");
+      const eduInst     = education.map(e => e.institution || "").join("\n\n");
+      const eduLocation = education.map(e => e.location    || "").join("\n\n");
+      const eduYears    = education.map(e => e.passingYear || "").join("\n\n");
+      const eduGrades   = education.map(e => e.grade       || "").join("\n\n");
+
+      // ── Certifications (Step 6) ───────────────────────────
+      const certLinks = (data.certificationsLinks || []).join("\n");
+
+      // ── Append row ────────────────────────────────────────
+      sheet.appendRow([
+        new Date(),                                               // Timestamp
+        data.fullName,                                            // Full Name
+        data.fulladdress                         || "",           // Full Address
+        data.city                                || "",           // City
+        data.state                               || "",           // State
+        data.zip                                 || "",           // ZIP Code
+        data.primaryPhone                        || "",           // Primary Phone
+        data.email,                                               // Email
+        data.birthDate                           || "",           // Birth Date
+        data.gender                              || "",           // Gender
+        proofLinks,                                               // Upload Proof Files
+        data.LinkedInprofileurl                  || "",           // LinkedIn Profile URL
+        data.githubProfileUrl                    || "",           // GitHub Profile URL
+        data.portfolioWebsiteUrl                 || "",           // Personal Portfolio Website URL
+        resumeLink,                                               // Upload Resume
+        data.willingToRelocate                   || "",           // Willing to Relocate
+        data.noticePeriod                        || "",           // Notice Period
+        data.currentCTC                          || "",           // Current CTC
+        data.expectedCTC                         || "",           // Expected CTC
+        data.immediateJoiner                     || "",           // Immediate Joiner
+        data.jobApplyingFor                      || "",           // Job You Are Applying For
+        data.whyAreYouInterestedInThisRole       || "",           // Why Are You Interested in This Role
+        data.relevantExperienceForThisRole       || "",           // Relevant Experience for This Role
+        data.keySkillsThatMakeYouSuitable        || "",           // Key Skills That Make You Suitable
+        data.yourUnderstandingOfThisRole         || "",           // Your Understanding of This Role
+        data.examplesOfWorkRelatedToThisRole     || "",           // Examples of Work Related to This Role
+        data.strengthsRelevantToThisRole         || "",           // Strengths Relevant to This Role
+        data.areasYouAreCurrentlyImproving       || "",           // Areas You Are Currently Improving
+        data.anythingElseYouWantUsToKnow         || "",           // Anything Else You Want Us to Know
+        data.whyAreYouLookingForAChange          || "",           // Why Are You Looking For Change
+        data.whereDoYouWantToBeIn                || "",           // Where Do You Want To Be In
+        data.primaryReasonsForSeekingNewOpportunity      || "",   // Primary Reasons For Seeking New Opportunity
+        data.commitmentMaintainedForMoreThanOneYear      || "",   // Commitment Maintained For More Than One Year
+        data.leaveCompanyWithinFirstSixMonths            || "",   // Leave Company Within First Six Months
+        data.leftRoleOrProjectBeforeCompletion           || "",   // Left Role Or Project Before Completion
+        employmentType,                                           // Employment Type
+        fresherOrg,                                               // Organization Name (Fresher)
+        fresherDesignation,                                       // Designation (Fresher)
+        fresherFrom,                                              // Duration From (Fresher)
+        fresherTo,                                                // Duration To (Fresher)
+        fresherStipend,                                           // Stipend (Fresher)
+        fresherDescription,                                       // Description (Fresher)
+        expOrg,                                                   // Organization Name (Experienced)
+        expLocation,                                              // Organization Location (Experienced)
+        expWorkMode,                                              // Work Mode (Experienced)
+        expDesignation,                                           // Designation (Experienced)
+        expStatus,                                                // Current Employment Status (Experienced)
+        expFrom,                                                  // Service Period From (Experienced)
+        expTo,                                                    // Service Period To (Experienced)
+        expCTC,                                                   // Last Company CTC (Experienced)
+        expPayslipLinks,                                          // Payslip Upload (Experienced)
+        expExpCertLinks,                                          // Experience Certificate (Experienced)
+        eduLevels,                                                // Education Level
+        eduFields,                                                // Field of Study
+        eduInst,                                                  // Institution Name
+        eduLocation,                                              // Location
+        eduYears,                                                 // Passing Year
+        eduGrades,                                                // Grade / Percentage
+        data.primarySkills                       || "",           // Primary Skills
+        data.secondarySkills                     || "",           // Secondary Skills
+        data.toolsAndTechnologies                || "",           // Tools / Technologies
+        data.programmingLanguages                || "",           // Programming Languages
+        certLinks,                                                // Certifications
+        data.languagesKnown                      || "",           // Languages Known
+        data.whyShouldWeHireYou                  || "",           // Why Should We Hire You
+        data.lifeStoryAndJourney                 || "",           // Life Story & Journey
+        data.difficultProblemsAndSolutions       || "",           // Difficult Problems & Solutions
+        data.decisionsAndTransitions             || "",           // Decisions & Transitions
+        data.ownershipAndResponsibility          || "",           // Ownership & Responsibility
+        data.biggestFailureAndWhatYouLearned     || "",           // Biggest Failure and What You Learned
+        data.timeYouDisagreedWithYourManager     || "",           // A Time You Disagreed with Your Manager
+        data.whatMotivatesYouBeyondSalary        || "",           // What Motivates You Beyond Salary
+        data.whereDoYouSeeYourselfIn5Years       || "",           // Where Do You See Yourself in 5 Years
+      ]);
+
+      Logger.log('[JobApp] Row appended for: ' + data.fullName + ' (' + data.email + ')');
+
+      const mirrored = mirrorNewRowToLandingSheet();
+
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: true, mirrored: mirrored }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    throw new Error("Invalid request: unrecognized payload");
+
+  } catch (err) {
+    Logger.log("[JobApp] doPost error: " + err.message);
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        error:   err.message
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+
+// ============================================================
+// MIRROR FEATURE
+// Automatically copies every new row from "Responses"
+// sheet → "job recuritment" sheet in the mirror spreadsheet.
+// ============================================================
+
+function mirrorNewRowToLandingSheet(e) {
+  try {
+    const sourceSpreadsheet = SpreadsheetApp.openById(SOURCE_SHEET_ID);
+    const sourceSheet       = sourceSpreadsheet.getSheetByName(SOURCE_SHEET_NAME);
+
+    if (!sourceSheet) {
+      Logger.log("Mirror: source sheet '" + SOURCE_SHEET_NAME + "' not found.");
+      return false;
+    }
+
+    const lastRow = sourceSheet.getLastRow();
+    if (lastRow < 2) return true;
+
+    const mirrorSpreadsheet = SpreadsheetApp.openById(MIRROR_SHEET_ID);
+    const mirrorSheet       = mirrorSpreadsheet.getSheetByName(MIRROR_SHEET_NAME);
+
+    if (!mirrorSheet) {
+      Logger.log("Mirror: destination sheet '" + MIRROR_SHEET_NAME + "' not found.");
+      return false;
+    }
+
+    const mirrorLastRow       = mirrorSheet.getLastRow();
+    const sourceTotalDataRows = lastRow - 1;
+    const mirrorTotalDataRows = Math.max(mirrorLastRow - 1, 0);
+
+    if (sourceTotalDataRows <= mirrorTotalDataRows) return true;
+
+    const numCols    = sourceSheet.getLastColumn();
+    const startRow   = mirrorTotalDataRows + 2;
+    const numNewRows = sourceTotalDataRows - mirrorTotalDataRows;
+
+    const newData = sourceSheet.getRange(startRow, 1, numNewRows, numCols).getValues();
+
+    mirrorSheet.getRange(
+      mirrorLastRow + 1,
+      1,
+      numNewRows,
+      numCols
+    ).setValues(newData);
+
+    Logger.log("Mirror: copied " + numNewRows + " new row(s) to landing sheet.");
+    return true;
+
+  } catch (err) {
+    Logger.log("Mirror error: " + err.message);
+    return false;
+  }
+}
+
+
+// ============================================================
+// UTILITY — Run once to set up the mirror trigger automatically
+// ============================================================
+function installMirrorTrigger() {
+  const ss = SpreadsheetApp.openById(SOURCE_SHEET_ID);
+
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === "mirrorNewRowToLandingSheet") {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+
+  ScriptApp.newTrigger("mirrorNewRowToLandingSheet")
+    .forSpreadsheet(ss)
+    .onChange()
+    .create();
+
+  Logger.log("Mirror trigger installed successfully.");
+}
+
+
+// ============================================================
+// BULK SYNC — Run ONCE manually to copy ALL existing rows
+// from "Responses" → "job recuritment". Safe to run multiple
+// times — never duplicates rows.
+// ============================================================
+function syncAllExistingRowsToMirror() {
+  try {
+    const sourceSpreadsheet = SpreadsheetApp.openById(SOURCE_SHEET_ID);
+    const sourceSheet       = sourceSpreadsheet.getSheetByName(SOURCE_SHEET_NAME);
+
+    if (!sourceSheet) {
+      Logger.log("BulkSync: source sheet '" + SOURCE_SHEET_NAME + "' not found.");
+      return;
+    }
+
+    const sourceLastRow = sourceSheet.getLastRow();
+    if (sourceLastRow < 2) {
+      Logger.log("BulkSync: no data rows found in source sheet.");
+      return;
+    }
+
+    const mirrorSpreadsheet = SpreadsheetApp.openById(MIRROR_SHEET_ID);
+    const mirrorSheet       = mirrorSpreadsheet.getSheetByName(MIRROR_SHEET_NAME);
+
+    if (!mirrorSheet) {
+      Logger.log("BulkSync: destination sheet '" + MIRROR_SHEET_NAME + "' not found.");
+      return;
+    }
+
+    const numCols    = sourceSheet.getLastColumn();
+    const sourceData = sourceSheet.getRange(2, 1, sourceLastRow - 1, numCols).getValues();
+
+    const mirrorLastRow = mirrorSheet.getLastRow();
+    const existingKeys  = new Set();
+
+    if (mirrorLastRow >= 2) {
+      const mirrorData = mirrorSheet.getRange(2, 1, mirrorLastRow - 1, numCols).getValues();
+      mirrorData.forEach(function (row) {
+        const key = String(row[0]) + "|" + String(row[7]);
+        existingKeys.add(key);
+      });
+    }
+
+    const rowsToAppend = sourceData.filter(function (row) {
+      const key = String(row[0]) + "|" + String(row[7]);
+      return !existingKeys.has(key);
+    });
+
+    if (rowsToAppend.length === 0) {
+      Logger.log("BulkSync: mirror is already up-to-date. No rows to add.");
+      return;
+    }
+
+    const writeStartRow = mirrorLastRow + 1;
+    mirrorSheet
+      .getRange(writeStartRow, 1, rowsToAppend.length, numCols)
+      .setValues(rowsToAppend);
+
+    Logger.log(
+      "BulkSync: successfully copied " + rowsToAppend.length +
+      " missing row(s). " +
+      (sourceData.length - rowsToAppend.length) + " row(s) already present, skipped."
+    );
+
+  } catch (err) {
+    Logger.log("BulkSync error: " + err.message);
+  }
+}

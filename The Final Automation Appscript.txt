@@ -1,0 +1,1509 @@
+// ============================================================
+// VERIFIED Shine Craft Recruitment WhatsApp Automation
+// Combined from Config.gs, Trigger.gs, WorkflowEngine.gs, Utils.gs,
+// WhatsApp.gs, DoGet_DoPost.gs, and Code.gs.
+// ============================================================
+
+var EVENTS = {
+  FORM_SUBMIT: 'FORM_SUBMIT',
+  INTERVIEW_1_SCHEDULE: 'INTERVIEW_1_SCHEDULE',
+  INTERVIEW_ROUND_1_NOT_ASSIGNED: 'INTERVIEW_ROUND_1_NOT_ASSIGNED',
+  INTERVIEW_ROUND_1_ASSIGNED: 'INTERVIEW_ROUND_1_ASSIGNED',
+  INTERVIEW_ROUND_1_ON_PROGRESS: 'INTERVIEW_ROUND_1_ON_PROGRESS',
+  INTERVIEW_ROUND_1_COMPLETED: 'INTERVIEW_ROUND_1_COMPLETED',
+  INTERVIEW_ROUND_1_INCOMPLETE: 'INTERVIEW_ROUND_1_INCOMPLETE',
+  INTERVIEW_ROUND_1_SELECTED: 'INTERVIEW_ROUND_1_SELECTED',
+  INTERVIEW_ROUND_1_REJECTED: 'INTERVIEW_ROUND_1_REJECTED',
+  INTERVIEW_ROUND_1_BLOCKLISTED: 'INTERVIEW_ROUND_1_BLOCKLISTED',
+  INTERVIEW_2_SCHEDULE: 'INTERVIEW_2_SCHEDULE',
+  INTERVIEW_ROUND_2_NOT_ASSIGNED: 'INTERVIEW_ROUND_2_NOT_ASSIGNED',
+  INTERVIEW_ROUND_2_ASSIGNED: 'INTERVIEW_ROUND_2_ASSIGNED',
+  INTERVIEW_ROUND_2_ON_PROGRESS: 'INTERVIEW_ROUND_2_ON_PROGRESS',
+  INTERVIEW_ROUND_2_COMPLETED: 'INTERVIEW_ROUND_2_COMPLETED',
+  INTERVIEW_ROUND_2_INCOMPLETE: 'INTERVIEW_ROUND_2_INCOMPLETE',
+  INTERVIEW_ROUND_2_SELECTED: 'INTERVIEW_ROUND_2_SELECTED',
+  INTERVIEW_ROUND_2_REJECTED: 'INTERVIEW_ROUND_2_REJECTED',
+  INTERVIEW_ROUND_2_BLOCKLISTED: 'INTERVIEW_ROUND_2_BLOCKLISTED',
+  INTERVIEW_3_SCHEDULE: 'INTERVIEW_3_SCHEDULE',
+  INTERVIEW_ROUND_3_SELECTED: 'INTERVIEW_ROUND_3_SELECTED',
+  INTERVIEW_ROUND_3_REJECTED: 'INTERVIEW_ROUND_3_REJECTED',
+  TASK_ASSIGNMENT: 'TASK_ASSIGNMENT',
+  TASK_STATUS_ASSIGNED: 'TASK_STATUS_ASSIGNED',
+  TASK_STATUS_NOT_ASSIGNED: 'TASK_STATUS_NOT_ASSIGNED',
+  TASK_STATUS_ON_PROGRESS: 'TASK_STATUS_ON_PROGRESS',
+  TASK_STATUS_COMPLETED: 'TASK_STATUS_COMPLETED',
+  TASK_STATUS_INCOMPLETE: 'TASK_STATUS_INCOMPLETE',
+  FINAL_SELECTED: 'FINAL_SELECTED',
+  FINAL_REJECTED: 'FINAL_REJECTED',
+  RESUME_REJECTED: 'RESUME_REJECTED',
+  BLOCKLISTED: 'BLOCKLISTED',
+  DESIGNATION_NOTIFICATION: 'DESIGNATION_NOTIFICATION',
+  DATA_UPDATED: 'DATA_UPDATED',
+  FEEDBACK_FORM: 'FEEDBACK_FORM',
+  TASK_REMINDER_1DAY: 'TASK_REMINDER_1DAY',
+  TASK_REMINDER_SAME_DAY: 'TASK_REMINDER_SAME_DAY'
+};
+
+var WORKFLOW_RULES = {
+  'Interview Level 1 Schedule': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview 1 Meeting link', 'Interview level 1 Mode', 'Contact person'] },
+  'Interview 1 Date and time': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview 1 Meeting link', 'Interview level 1 Mode', 'Contact person'] },
+  'Interview Date and time': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview 1 Meeting link', 'Interview level 1 Mode', 'Contact person'] },
+  'Interview Date and TIme': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview 1 Meeting link', 'Interview level 1 Mode', 'Contact person'] },
+  'Interview 1 Meeting link': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview Level 1 Schedule', 'Interview level 1 Mode', 'Contact person'] },
+  'Interview level 1 Meeting link': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview Level 1 Schedule', 'Interview level 1 Mode', 'Contact person'] },
+  'Contact person': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview Level 1 Schedule', 'Interview 1 Meeting link', 'Interview level 1 Mode'] },
+  'Contact person 1': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview Level 1 Schedule', 'Interview 1 Meeting link', 'Interview level 1 Mode'] },
+  'Interview level 1 Mode': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview Level 1 Schedule', 'Interview 1 Meeting link', 'Contact person'] },
+  'Interview 1 Mode': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview Level 1 Schedule', 'Interview 1 Meeting link', 'Contact person'] },
+  'Interview Mode': { conditional: false, eventType: 'INTERVIEW_1_SCHEDULE', fetchFields: ['Interview Level 1 Schedule', 'Interview 1 Meeting link', 'Contact person'] },
+  'Interview Level 2 Schedule': { conditional: false, eventType: 'INTERVIEW_2_SCHEDULE', fetchFields: ['Interview 2 Meeting link', 'Interview level 2 Mode', 'Contact person 2'] },
+  'Interview 2 Date and time': { conditional: false, eventType: 'INTERVIEW_2_SCHEDULE', fetchFields: ['Interview 2 Meeting link', 'Interview level 2 Mode', 'Contact person 2'] },
+  'Interview date and timing for level 2': { conditional: false, eventType: 'INTERVIEW_2_SCHEDULE', fetchFields: ['Interview 2 Meeting link', 'Interview level 2 Mode', 'Contact person 2'] },
+  'interview date and time for Round 2': { conditional: false, eventType: 'INTERVIEW_2_SCHEDULE', fetchFields: ['Interview 2 Meeting link', 'Interview level 2 Mode', 'Contact person 2'] },
+  'Interview 2 Meeting link': { conditional: false, eventType: 'INTERVIEW_2_SCHEDULE', fetchFields: ['Interview Level 2 Schedule', 'Interview level 2 Mode', 'Contact person 2'] },
+  'Interview level 2 Meeting link': { conditional: false, eventType: 'INTERVIEW_2_SCHEDULE', fetchFields: ['Interview Level 2 Schedule', 'Interview level 2 Mode', 'Contact person 2'] },
+  'Contact person 2': { conditional: false, eventType: 'INTERVIEW_2_SCHEDULE', fetchFields: ['Interview Level 2 Schedule', 'Interview 2 Meeting link', 'Interview level 2 Mode'] },
+  'Level 2 Contact person': { conditional: false, eventType: 'INTERVIEW_2_SCHEDULE', fetchFields: ['Interview Level 2 Schedule', 'Interview 2 Meeting link', 'Interview level 2 Mode'] },
+  'Interview level 2 Mode': { conditional: false, eventType: 'INTERVIEW_2_SCHEDULE', fetchFields: ['Interview Level 2 Schedule', 'Interview 2 Meeting link', 'Contact person 2'] },
+  'Level 2 Interview Mode': { conditional: false, eventType: 'INTERVIEW_2_SCHEDULE', fetchFields: ['Interview Level 2 Schedule', 'Interview 2 Meeting link', 'Contact person 2'] },
+  'Interview Round 1 Status': {
+    conditional: true,
+    interviewRound: 1,
+    eventTypes: {
+      'not assigned': EVENTS.INTERVIEW_ROUND_1_NOT_ASSIGNED,
+      'assigned': EVENTS.INTERVIEW_ROUND_1_ASSIGNED,
+      'on progress': EVENTS.INTERVIEW_ROUND_1_ON_PROGRESS,
+      'completed': EVENTS.INTERVIEW_ROUND_1_COMPLETED,
+      'incomplete': EVENTS.INTERVIEW_ROUND_1_INCOMPLETE,
+      'incompleted': EVENTS.INTERVIEW_ROUND_1_INCOMPLETE,
+      'selected for round 2': EVENTS.INTERVIEW_ROUND_1_SELECTED,
+      'selected': EVENTS.INTERVIEW_ROUND_1_SELECTED,
+      'rejected': EVENTS.INTERVIEW_ROUND_1_REJECTED,
+      'blocklisted': EVENTS.INTERVIEW_ROUND_1_BLOCKLISTED
+    }
+  },
+  'Interview Round 2 Status': {
+    conditional: true,
+    interviewRound: 2,
+    eventTypes: {
+      'not assigned': EVENTS.INTERVIEW_ROUND_2_NOT_ASSIGNED,
+      'assigned': EVENTS.INTERVIEW_ROUND_2_ASSIGNED,
+      'on progress': EVENTS.INTERVIEW_ROUND_2_ON_PROGRESS,
+      'completed': EVENTS.INTERVIEW_ROUND_2_COMPLETED,
+      'incomplete': EVENTS.INTERVIEW_ROUND_2_INCOMPLETE,
+      'incompleted': EVENTS.INTERVIEW_ROUND_2_INCOMPLETE,
+      'selected for round 3': EVENTS.INTERVIEW_ROUND_2_SELECTED,
+      'selected': EVENTS.INTERVIEW_ROUND_2_SELECTED,
+      'rejected': EVENTS.INTERVIEW_ROUND_2_REJECTED,
+      'blocklisted': EVENTS.INTERVIEW_ROUND_2_BLOCKLISTED
+    }
+  },
+  'Task Status': { conditional: false, taskStatusBranch: true, fetchFields: ['Task details', 'Deadline'] },
+  'Task details': { conditional: false, eventType: 'TASK_ASSIGNMENT', fetchFields: ['Deadline'] },
+  'Deadline': { conditional: false, eventType: 'TASK_ASSIGNMENT', fetchFields: ['Task details'] },
+  'Status': { conditional: true, eventTypes: { 'selected': EVENTS.FINAL_SELECTED, 'rejected': EVENTS.FINAL_REJECTED, 'blocklisted': EVENTS.BLOCKLISTED } },
+  'Resume Status': { conditional: true, eventTypes: { 'selected': EVENTS.FINAL_SELECTED, 'rejected': EVENTS.FINAL_REJECTED, 'blocklisted': EVENTS.BLOCKLISTED } },
+  'Designation': { conditional: false, eventType: 'DESIGNATION_NOTIFICATION', fetchFields: ['Designation'] },
+  'Feedback Form': { conditional: false, eventType: null }
+};
+
+var CONFIG = {
+  SPREADSHEET_ID: '',
+  DATA_SHEET:      'Job_Applicants',
+  QUEUE_SHEET:     'Message Queue',
+  LOG_SHEET:       'AUTOMATION LOG',
+  DASHBOARD_SHEET: 'Dashboard',
+  COMPANY_NAME:    'Shine Craft Technologies',
+  COUNTRY_CODE:    '+91',
+  CACHE_PREFIX:       'SC_MSG_',
+  CACHE_EXPIRY_HOURS: 24,
+
+  HEADERS: {
+    TIMESTAMP: ['Timestamp', 'timestamp', 'Date'],
+    NAME: ['Name', 'name', 'Full Name', 'Candidate Name', 'full name', 'candidate name'],
+    PHONE: ['whatsapp number', 'WhatsApp Number', 'Whatsapp Number', 'Phone', 'phone', 'Phone Number', 'Mobile', 'Contact', 'mobile number', 'contact number', 'primary phone', 'primary phone number', 'Primary Phone', 'Primary Phone Number'],
+    EMAIL: ['email address', 'Email Address', 'Email', 'email', ' Email '],
+
+    POSITION: ['Job You Are Applying For', 'job you are applying for', 'Job Role', 'job role', 'Job Position Applied', 'job position applied', 'Position Applied', 'position applied', 'Position', 'position', 'Job Title', 'job title', 'Role', 'role', 'Applied Position', 'applied position', 'Post Applied', 'post applied'],
+    EXPERIENCE: ['Relevant Experience for This Role', 'relevant experience for this role', 'Experience', 'experience', 'Years of Experience', 'years of experience', 'Work Experience', 'work experience', 'Total Experience', 'total experience'],
+    DESIGNATION: ['designation', 'Designation', 'Proficiency Level', 'proficiency', 'Proficiency', 'Desgination', 'Position', 'Job Title', 'Role', 'Assigned Designation', 'Job Role'],
+
+    INTERVIEW_1_DT: ['Interview Level 1 Schedule', 'interview level 1 schedule', 'Interview 1 Date and time', 'Interview 1 Date and Time', 'interview 1 date and time', 'Interview Date 1', 'interview date and timing for levell 1', 'Interview Date and TIme', 'Interview 1 Schedule'],
+    CONTACT_PERSON: ['Contact person', 'contact person', 'Contact Person', 'contact person 1', 'Interview level 1 Contact person', 'Interview level 1 contact person', 'Interview 1 Contact person'],
+    MEETING_LINK_1: ['Interview 1 Meeting link', 'Interview 1 Meeting Link', 'Meeting link', 'meeting link', 'Meeting Link', 'Interview level 1 Meeting link', 'Interview level 1 meeting link'],
+    INTERVIEW_MODE_1: ['Interview Mode', 'interview mode', 'Interview level 1 Mode', 'interview level 1 mode', 'Interview Level 1 Mode', 'Interview 1 Mode', 'Interview 1 mode'],
+    INTERVIEW_ROUND_1: ['Interview Round 1 Status', 'interview round 1 status', 'Interview Round 1 list', 'Interview Round 1 List', 'interview round 1 list', 'Round one list', 'Round 1 Result', 'Interview level 1 status'],
+
+    INTERVIEW_2_DT: ['Interview Level 2 Schedule', 'interview level 2 schedule', 'interview level 2 date and time', 'Interview level 2 date and time', 'Interview 2 Date and time', 'Interview Date 2', 'Interview date and timing for level 2', 'interview date and time for Round 2', 'Interview 2 Schedule'],
+    CONTACT_PERSON_2: ['Level 2 Contact person', 'level 2 contact person', 'Contact Person 2', 'contact person 2', 'Interview level 2 Contact person', 'Interview level 2 contact person', 'Interview 2 Contact person'],
+    MEETING_LINK_2: ['Interview 2 Meeting link', 'Interview 2 Meeting Link', 'Meeting link 2', 'meeting link 2', 'Interview level 2 Meeting link', 'Interview level 2 meeting link'],
+    INTERVIEW_MODE_2: ['level 2 Interview Mode', 'Level 2 Interview Mode', 'Interview level 2 Mode', 'interview level 2 mode', 'Interview Mode 2', 'interview mode 2', 'Interview 2 Mode', 'Interview 2 mode'],
+    INTERVIEW_ROUND_2: ['Interview Round 2 Status', 'interview round 2 status', 'interview round 2 list', 'Interview Round 2 list', 'Interview Round 2 List', 'round two list', 'Round 2 Result', 'interview level 2 status', 'Interview level 2 status'],
+
+    INTERVIEW_3_DT: ['interview level 3 date', 'Interview level 3 date', 'Interview 3 Date', 'interview level 3 date and time', 'Interview 3 Date and time', 'Interview data and timing for level 3'],
+    INTERVIEW_ROUND_3: ['interview round 3 list', 'Interview Round 3 list', 'Interview Round 3 List', 'Round 3 Result', 'interview level 3 status'],
+
+    TASK_DETAIL: ['Task details', 'task details', 'task detail', 'Task Detail', 'Task', 'task', 'Task Link', 'Assignment', 'assignment'],
+    TASK_DEADLINE: ['Deadline', 'deadline', 'task dead line', 'Task Deadline', 'task deadline', 'Task Dead Line'],
+    TASK_STATUS: ['Task Status', 'task status'],
+    COMMENTS: ['Comments', 'comments', 'Comment', 'Comments for this', 'comments for this'],
+    SILENT_FORM_FIELDS: [
+      'Timestamp', 'Full Name', 'Full Address', 'City', 'State', 'ZIP Code', 'Primary Phone', 'Email', 'Birth Date', 'Gender',
+      'Upload Proof Files', 'LinkedIn Profile URL', 'GitHub Profile URL', 'Personal Portfolio Website URL', 'Upload Resume',
+      'Willing to Relocate', 'Notice Period', 'Current CTC', 'Expected CTC', 'Immediate Joiner', 'Job You Are Applying For',
+      'Why Are You Interested in This Role', 'Relevant Experience for This Role', 'Key Skills That Make You Suitable',
+      'Your Understanding of This Role', 'Examples of Work Related to This Role', 'Strengths Relevant to This Role',
+      'Areas You Are Currently Improving', 'Anything Else You Want Us to Know', 'Why Are You Looking For A Change',
+      'Where do you want to be in', 'What are your primary reasons for seeking a new opportunity',
+      'Describe a commitment you maintained for more than one year',
+      'What would make you leave a company within the first six months',
+      'Have you ever left a role/project before completion? Explain', 'Employment Type', 'Organization Name', 'Designation',
+      'Duration From', 'Duration To', 'Stipend', 'Description', 'Organization Location', 'Work Mode',
+      'Current Employment Status', 'Service Period From', 'Service Period To', 'Last Company CTC', 'Payslip Upload',
+      'Experience Certificate', 'Education Level', 'Field of Study', 'Institution Name', 'Location', 'Passing Year',
+      'Grade / Percentage', 'Primary Skills', 'Secondary Skills', 'Tools/ Technologies', 'Programming Languages',
+      'Certifications', 'Languages Known', 'Why Should We Hire You', 'Life Story & Journey', 'Difficult Problems & Solutions',
+      'Decisions & Transitions', 'Ownership & Responsibility', 'Biggest failure and what you learned',
+      'A Time You Disagreed with Your Manager and What You Did', 'What Motivates You Beyond Salary',
+      'Where do you see yourself in 5 years', 'Comments', 'Comment', 'Comments for this'
+    ],
+
+    STATUS: ['Status', 'status', 'Current Status'],
+    RESUME_STATUS: ['Resume Status', 'resume status'],
+    FEEDBACK_FORM: ['Feedback Form', 'feedback form', 'Feedback Link', 'Feedback Form Link'],
+    REJECTION_REASON: ['Reason for Rejected', 'reason for rejected', 'Reason for Rejection', 'rejection reason']
+  },
+
+  DROPDOWNS: {
+    SELECTED: ['Selected', 'selected', 'Yes', 'yes', 'Accepted', 'Pass', 'pass', 'Passed', 'Shortlisted', 'shortlisted'],
+    REJECTED: ['Rejected', 'rejected', 'No', 'no', 'Fail', 'fail', 'Failed', 'Not Selected', 'not selected']
+  },
+
+  EVENTS: EVENTS,
+  WORKFLOW_RULES: WORKFLOW_RULES
+};
+
+// ============================================================
+// Menu and install helpers
+// ============================================================
+function onOpen() {
+  try {
+    SpreadsheetApp.getUi().createMenu('ShineCraft ATS')
+      .addItem('1. Install Automation', 'installAutomation')
+      .addItem('2. Clear Sent Cache',   'clearSentCache')
+      .addItem('3. Preview Log Sheet',  'manualDashboardRefresh')
+      .addToUi();
+  } catch (err) {
+    Logger.log('[Code] onOpen: ' + err.message);
+  }
+}
+
+function installAutomation() {
+  try {
+    validateConfig();
+    getDataSheet();
+    ensureQueueSheet();
+    getSheet(CONFIG.LOG_SHEET);
+    getSheet(CONFIG.DASHBOARD_SHEET);
+    setupTriggers();
+    Logger.log('[Code] installAutomation complete');
+    safeAlert('✅ Installation complete!\n\nSheets created, triggers installed.\n\nNext step: Deploy as Web App and paste the URL into the Chrome Extension config.js');
+  } catch (err) {
+    Logger.log('[Code] installAutomation error: ' + err.message);
+    safeAlert('❌ Error: ' + err.message);
+  }
+}
+
+function safeAlert(msg) {
+  try { SpreadsheetApp.getUi().alert(msg); } catch (_) { Logger.log('[safeAlert] ' + msg); }
+}
+
+function clearSentCache() {
+  var props = PropertiesService.getScriptProperties();
+  var keys  = props.getKeys().filter(function(k){ return k.indexOf(CONFIG.CACHE_PREFIX) === 0; });
+  keys.forEach(function(k){ props.deleteProperty(k); });
+  safeAlert('Cleared ' + keys.length + ' cached entries.');
+}
+
+function manualDashboardRefresh() {
+  safeAlert('Log sheet is at: ' + CONFIG.LOG_SHEET);
+}
+
+function validateConfig() {
+  if (!CONFIG.DATA_SHEET) throw new Error('CONFIG.DATA_SHEET is required.');
+  if (!CONFIG.QUEUE_SHEET) throw new Error('CONFIG.QUEUE_SHEET is required.');
+  if (!CONFIG.LOG_SHEET) throw new Error('CONFIG.LOG_SHEET is required.');
+}
+
+// ============================================================
+// Trigger installation and workflow wiring
+// ============================================================
+function removeDuplicateTriggers() {
+  try {
+    var seen = {};
+    var trigs = ScriptApp.getProjectTriggers();
+    for (var i = 0; i < trigs.length; i++) {
+      var t = trigs[i];
+      var fn = t.getHandlerFunction();
+      if (!fn) continue;
+      // If we've already seen this handler, delete the duplicate
+      if (seen[fn]) {
+        try { ScriptApp.deleteTrigger(t); Logger.log('[Trigger] Deleted duplicate trigger: ' + fn); } catch(e) { Logger.log('[Trigger] Could not delete duplicate ' + fn + ': ' + e.message); }
+      } else {
+        seen[fn] = true;
+      }
+    }
+  } catch (err) { Logger.log('[Trigger] removeDuplicateTriggers error: ' + err.message); }
+}
+
+function setupTriggers() {
+  var ss = getSpreadsheet();
+  // Remove duplicates first, then remove any remaining old triggers we manage
+  removeDuplicateTriggers();
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    var fn = t.getHandlerFunction();
+    if (fn === 'onEdit' || fn === 'onFormSubmit' || fn === 'handleEdit' || fn === 'handleFormSubmit' || fn === 'checkDeadlineReminders' || fn === 'processMirroredRows') {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+  ScriptApp.newTrigger('handleEdit').forSpreadsheet(ss).onEdit().create();
+  ScriptApp.newTrigger('handleFormSubmit').forSpreadsheet(ss).onFormSubmit().create();
+  ScriptApp.newTrigger('checkDeadlineReminders').timeBased().atHour(8).everyDays(1).create();
+  // Install onChange trigger to detect programmatic row inserts / mirroring
+  try { ScriptApp.newTrigger('onChange').forSpreadsheet(ss).onChange().create(); } catch(e) { Logger.log('[Trigger] could not create onChange trigger: ' + e.message); }
+  // Poll for mirrored/new rows and queue form-submit messages (runs every 5 minutes)
+  try { ScriptApp.newTrigger('processMirroredRows').timeBased().everyMinutes(1).create(); } catch(e) { Logger.log('[Trigger] could not create processMirroredRows trigger: ' + e.message); }
+  Logger.log('[Trigger] Triggers installed');
+}
+
+function getRowQueueMarkerKey(sheetName, rowIndex, eventType) {
+  var safeSheet = (sheetName || 'data').toString().replace(/[^A-Za-z0-9]/g, '_');
+  return 'ROW_QUEUE_' + safeSheet + '_' + (rowIndex || 0) + '_' + (eventType || 'FORM_SUBMIT');
+}
+
+function hasRowQueueMarker(sheetName, rowIndex, eventType) {
+  if (!rowIndex) return false;
+  return PropertiesService.getScriptProperties().getProperty(getRowQueueMarkerKey(sheetName, rowIndex, eventType)) === '1';
+}
+
+function markRowQueueMarker(sheetName, rowIndex, eventType) {
+  if (!rowIndex) return;
+  PropertiesService.getScriptProperties().setProperty(getRowQueueMarkerKey(sheetName, rowIndex, eventType), '1');
+}
+
+function getProcessedRowMarkerKey(sheetName) {
+  var safeSheet = (sheetName || 'data').toString().replace(/[^A-Za-z0-9]/g, '_');
+  return 'LAST_PROCESSED_ROW_' + safeSheet;
+}
+
+function isEligibleNewApplicationRow(sheet, rowIndex) {
+  if (!sheet || !rowIndex || rowIndex <= 1) return false;
+  var sheetName = sheet.getName ? sheet.getName() : '';
+  if (hasRowQueueMarker(sheetName, rowIndex, CONFIG.EVENTS.FORM_SUBMIT)) return false;
+  var lastProcessedRow = getLastProcessedRow(sheetName);
+  if (lastProcessedRow > 0 && rowIndex <= lastProcessedRow) return false;
+  return true;
+}
+
+function getLastProcessedRow(sheetName) {
+  var value = PropertiesService.getScriptProperties().getProperty(getProcessedRowMarkerKey(sheetName));
+  var parsed = Number(value || 0);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+function setLastProcessedRow(sheetName, rowIndex) {
+  if (!rowIndex) return;
+  PropertiesService.getScriptProperties().setProperty(getProcessedRowMarkerKey(sheetName), String(rowIndex));
+}
+
+// ============================================================
+// Mirror handling: scan sheet for rows that were added by mirroring
+// and ensure a FORM_SUBMIT message is queued for new rows.
+// ============================================================
+function processMirroredRows() {
+  try {
+    var sheet = getDataSheet();
+    var sheetName = sheet.getName();
+    var lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return;
+
+    var lastProcessedRow = getLastProcessedRow(sheetName);
+    if (lastProcessedRow <= 0) {
+      setLastProcessedRow(sheetName, lastRow);
+      Logger.log('[Mirrored] Baseline row set to ' + lastRow + ' for sheet ' + sheetName);
+      return;
+    }
+    if (lastProcessedRow > 0 && lastRow <= lastProcessedRow) return;
+
+    var startRow = Math.max(lastProcessedRow + 1, 2);
+    for (var r = startRow; r <= lastRow; r++) {
+      try {
+        if (hasRowQueueMarker(sheetName, r, CONFIG.EVENTS.FORM_SUBMIT)) continue;
+
+        var candidate = readCandidateFromRow(sheet, r);
+        if (!candidate || !candidate.phone) continue;
+
+        var message = generateMessage(CONFIG.EVENTS.FORM_SUBMIT, candidate, {});
+        if (!message) continue;
+
+        var queueResult = queueWhatsApp({ candidate: candidate, eventType: CONFIG.EVENTS.FORM_SUBMIT, triggerColumn: 'FORM_SUBMIT', oldText: '', newText: '', message: message });
+        if (queueResult !== false && queueResult !== null && queueResult !== undefined) {
+          markRowQueueMarker(sheetName, r, CONFIG.EVENTS.FORM_SUBMIT);
+        }
+        logMessageEvent(candidate, 'FORM_SUBMIT', '', '', CONFIG.EVENTS.FORM_SUBMIT, 'QUEUED', 'Mirrored row auto-queued', message);
+      } catch (inner) { Logger.log('[Mirrored] row ' + r + ' error: ' + inner.message); }
+    }
+
+    setLastProcessedRow(sheetName, lastRow);
+  } catch (err) {
+    Logger.log('[Mirrored] processMirroredRows error: ' + err.message);
+  }
+}
+
+function onChange(e) {
+  try {
+    var changeType = e && e.changeType ? e.changeType : '';
+    Logger.log('[Trigger] onChange detected: ' + changeType);
+    // When rows are inserted (by mirroring or import), scan and queue
+    if (changeType === 'INSERT_ROW' || changeType === 'OTHER' || changeType === 'REMOVE_ROW' || changeType === 'FORMAT') {
+      processMirroredRows();
+    }
+  } catch (err) { Logger.log('[Trigger] onChange error: ' + err.message); }
+}
+
+function handleEdit(e) {
+  try {
+    var range  = e && e.range;
+    if (!range) return;
+    var sheet     = range.getSheet();
+    var sheetName = sheet.getName();
+    if (sheetName !== CONFIG.DATA_SHEET) {
+      if (!isDataSheet(sheet)) {
+        Logger.log('[Trigger] onEdit skipped: sheet ' + sheetName + ' not recognized as data sheet');
+        return;
+      }
+      Logger.log('[Trigger] onEdit fallback: using sheet ' + sheetName + ' as data sheet');
+    }
+    var rowIndex = range.getRow();
+    if (rowIndex <= 1) return;
+    
+    // DUPLICATE PREVENTION: Skip if this exact edit was just processed
+    var editKey = 'EDIT_LOCK_' + sheetName + '_' + rowIndex + '_' + range.getColumn();
+    var props = PropertiesService.getScriptProperties();
+    var lastEditTime = props.getProperty(editKey);
+    var now = Date.now();
+    
+    if (lastEditTime && (now - Number(lastEditTime)) < 2000) {
+      Logger.log('[Trigger] Skipped duplicate onEdit for row ' + rowIndex + ' (within 2 seconds)');
+      return;
+    }
+    props.setProperty(editKey, now.toString());
+    
+    var editedCol = range.getColumn();
+    var lastCol = sheet.getLastColumn();
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0] || [];
+    var columnHeader = (headers[editedCol - 1] || '').toString().trim();
+    var oldValue = (e.oldValue !== undefined && e.oldValue !== null) ? e.oldValue : '';
+    var newValue = (e.value !== undefined && e.value !== null) ? e.value : sheet.getRange(rowIndex, editedCol).getValue();
+    Logger.log('[Trigger] edit: sheet=' + sheetName + ' row=' + rowIndex + ' col=' + columnHeader + ' old="' + oldValue + '" new="' + newValue + '"');
+    handleWorkflowEvent(sheet, rowIndex, columnHeader, oldValue, newValue);
+  } catch (err) {
+    Logger.log('[Trigger] onEdit error: ' + err.message);
+    try { logSystemError('onEdit', err.message, err.stack || ''); } catch(_) {}
+  }
+}
+
+function isDataSheet(sheet) {
+  if (!sheet) return false;
+  var name = sheet.getName();
+  if (name === CONFIG.DATA_SHEET) return true;
+  var phoneIdx = getColumnIndexByHeader(sheet, CONFIG.HEADERS.PHONE);
+  var nameIdx = getColumnIndexByHeader(sheet, CONFIG.HEADERS.NAME);
+  return !!phoneIdx && !!nameIdx;
+}
+
+function handleFormSubmit(e) {
+  try {
+    var sheet    = e && e.range ? e.range.getSheet() : getDataSheet();
+    var rowIndex = e && e.range ? e.range.getRow() : (sheet ? sheet.getLastRow() : null);
+    if (!sheet || !rowIndex) return;
+    if (sheet.getName() !== CONFIG.DATA_SHEET && !isDataSheet(sheet)) {
+      Logger.log('[Trigger] onFormSubmit skipped: sheet ' + sheet.getName() + ' not recognized as data sheet');
+      return;
+    }
+    handleWorkflowEvent(sheet, rowIndex, 'FORM_SUBMIT', null, null);
+  } catch (err) {
+    Logger.log('[Trigger] onFormSubmit error: ' + err.message);
+  }
+}
+
+function checkDeadlineReminders() {
+  try {
+    var sheet = getDataSheet();
+    var lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return;
+    var deadlineIdx = getColumnIndexByHeader(sheet, CONFIG.HEADERS.TASK_DEADLINE);
+    if (!deadlineIdx) return;
+    for (var row = 2; row <= lastRow; row++) {
+      var deadline = sheet.getRange(row, deadlineIdx).getValue();
+      var days = daysUntil(deadline);
+      var candidate = readCandidateFromRow(sheet, row);
+      if (!candidate || !candidate.phone) continue;
+      if (days === 1) {
+        var msg = generateMessage(CONFIG.EVENTS.TASK_REMINDER_1DAY, candidate, {});
+        if (msg) { queueWhatsApp({ candidate: candidate, eventType: CONFIG.EVENTS.TASK_REMINDER_1DAY, triggerColumn: 'TASK_DEADLINE', oldText: '', newText: '', message: msg }); }
+      } else if (days === 0) {
+        var msg2 = generateMessage(CONFIG.EVENTS.TASK_REMINDER_SAME_DAY, candidate, {});
+        if (msg2) { queueWhatsApp({ candidate: candidate, eventType: CONFIG.EVENTS.TASK_REMINDER_SAME_DAY, triggerColumn: 'TASK_DEADLINE', oldText: '', newText: '', message: msg2 }); }
+      }
+    }
+  } catch (err) {
+    Logger.log('[Trigger] checkDeadlineReminders error: ' + err.message);
+  }
+}
+
+function daysUntil(value) {
+  if (!value) return -1;
+  try {
+    var d = value instanceof Date ? value : new Date(value);
+    if (isNaN(d.getTime())) return -1;
+    var today = new Date(); today.setHours(0,0,0,0);
+    return Math.ceil((d.getTime() - today.getTime()) / 86400000);
+  } catch (_) { return -1; }
+}
+
+// ============================================================
+// Workflow engine
+// ============================================================
+function getWorkflowRule(columnHeader) {
+  if (!columnHeader) return null;
+  var norm = normalizeHeaderName(columnHeader);
+  for (var ruleKey in CONFIG.WORKFLOW_RULES) {
+    if (normalizeHeaderName(ruleKey) === norm) return CONFIG.WORKFLOW_RULES[ruleKey];
+  }
+  for (var ruleKey2 in CONFIG.WORKFLOW_RULES) {
+    for (var headerKey in CONFIG.HEADERS) {
+      var aliases = CONFIG.HEADERS[headerKey] || [];
+      if (aliases.some(function(a){ return normalizeHeaderName(a) === normalizeHeaderName(ruleKey2); })) {
+        if (aliases.some(function(a){ return normalizeHeaderName(a) === norm; })) {
+          return CONFIG.WORKFLOW_RULES[ruleKey2];
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function isFeedbackFormColumn(columnHeader) {
+  var norm = normalizeHeaderName(columnHeader || '');
+  return norm === 'feedback form' || norm === 'feedback link' || norm === 'feedback form link';
+}
+
+function getMissingFields(sheet, rowIndex, headers) {
+  var missing = [];
+  headers = Array.isArray(headers) ? headers : [headers];
+  for (var i = 0; i < headers.length; i++) {
+    var header = headers[i];
+    if (!header) continue;
+    var idx = getColumnIndexByHeader(sheet, header);
+    var value = '';
+    if (idx) { value = (sheet.getRange(rowIndex, idx).getValue() || '').toString().trim(); }
+    if (!value) { missing.push(header); }
+  }
+  return missing;
+}
+
+function hasRequiredFields(sheet, rowIndex, headers) {
+  return getMissingFields(sheet, rowIndex, headers).length === 0;
+}
+
+function getStatusEventForValue(value) {
+  if (isSelected(value)) return CONFIG.EVENTS.FINAL_SELECTED;
+  if (isRejected(value)) return CONFIG.EVENTS.FINAL_REJECTED;
+  if (isBlocklisted(value)) return CONFIG.EVENTS.BLOCKLISTED;
+  return null;
+}
+
+function headerMatchesAliases(columnHeader, aliases) {
+  var normCol = normalizeHeaderName(columnHeader || '');
+  if (!aliases) return false;
+  return aliases.some(function(alias) {
+    return normalizeHeaderName(alias) === normCol;
+  });
+}
+
+function isSilentFormField(columnHeader) {
+  return headerMatchesAliases(columnHeader, CONFIG.HEADERS.SILENT_FORM_FIELDS);
+}
+
+function isInterviewModeColumn(columnHeader) {
+  return headerMatchesAliases(columnHeader, CONFIG.HEADERS.INTERVIEW_MODE_1.concat(CONFIG.HEADERS.INTERVIEW_MODE_2));
+}
+
+function isInterviewDetailColumn(columnHeader) {
+  return headerMatchesAliases(columnHeader, CONFIG.HEADERS.INTERVIEW_1_DT
+    .concat(CONFIG.HEADERS.INTERVIEW_2_DT)
+    .concat(CONFIG.HEADERS.MEETING_LINK_1)
+    .concat(CONFIG.HEADERS.MEETING_LINK_2)
+    .concat(CONFIG.HEADERS.CONTACT_PERSON)
+    .concat(CONFIG.HEADERS.CONTACT_PERSON_2));
+}
+
+function getInterviewWorkflowContext(columnHeader) {
+  if (headerMatchesAliases(columnHeader, CONFIG.HEADERS.INTERVIEW_MODE_1)) {
+    return {
+      eventType: CONFIG.EVENTS.INTERVIEW_1_SCHEDULE,
+      fetchFields: ['Interview Level 1 Schedule', 'Interview 1 Meeting link', 'Contact person', 'Interview level 1 Mode']
+    };
+  }
+  if (headerMatchesAliases(columnHeader, CONFIG.HEADERS.INTERVIEW_MODE_2)) {
+    return {
+      eventType: CONFIG.EVENTS.INTERVIEW_2_SCHEDULE,
+      fetchFields: ['Interview Level 2 Schedule', 'Interview 2 Meeting link', 'Contact person 2', 'Interview level 2 Mode']
+    };
+  }
+  return null;
+}
+
+function getTaskWorkflowContext(columnHeader, newValue) {
+  if (headerMatchesAliases(columnHeader, CONFIG.HEADERS.TASK_STATUS)) {
+    var taskEvent = getTaskStatusEvent(newValue);
+    if (!taskEvent) return null;
+    return {
+      eventType: taskEvent,
+      fetchFields: ['Task details', 'Deadline', 'Task Status']
+    };
+  }
+  if (headerMatchesAliases(columnHeader, CONFIG.HEADERS.TASK_DETAIL.concat(CONFIG.HEADERS.TASK_DEADLINE))) {
+    return {
+      eventType: CONFIG.EVENTS.TASK_ASSIGNMENT,
+      fetchFields: ['Task details', 'Deadline', 'Task Status']
+    };
+  }
+  return null;
+}
+
+function getFieldValue(sheet, rowIndex, headerOrAliases) {
+  var idx = getColumnIndexByHeader(sheet, headerOrAliases);
+  if (!idx) return '';
+  return (sheet.getRange(rowIndex, idx).getValue() || '').toString().trim();
+}
+
+function queueNewApplicationMessage(sheet, rowIndex, candidate, triggerColumn, oldText, newText) {
+  if (!candidate || !candidate.phone) return false;
+  if (!isEligibleNewApplicationRow(sheet, rowIndex)) return false;
+
+  var initHash = 'newrow_' + rowIndex + '_' + candidate.phone;
+  if (isDuplicateMessage(candidate.phone, CONFIG.EVENTS.FORM_SUBMIT, rowIndex, initHash)) return false;
+
+  var message = generateMessage(CONFIG.EVENTS.FORM_SUBMIT, candidate, {});
+  if (!message) return false;
+
+  var queueResult = queueWhatsApp({
+    candidate: candidate,
+    eventType: CONFIG.EVENTS.FORM_SUBMIT,
+    triggerColumn: triggerColumn || 'NEW_ROW',
+    oldText: oldText || '',
+    newText: newText || '',
+    message: message
+  });
+  if (queueResult !== false && queueResult !== null && queueResult !== undefined) {
+    markRowQueueMarker(sheet && sheet.getName ? sheet.getName() : '', rowIndex, CONFIG.EVENTS.FORM_SUBMIT);
+    markMessageSent(candidate.phone, CONFIG.EVENTS.FORM_SUBMIT, rowIndex, initHash);
+  }
+  logMessageEvent(candidate, triggerColumn || 'NEW_ROW', oldText || '', newText || '', CONFIG.EVENTS.FORM_SUBMIT, 'QUEUED', 'New row application message queued', message);
+  return true;
+}
+
+function isNewApplicationTriggerColumn(columnHeader) {
+  return headerMatchesAliases(columnHeader, CONFIG.HEADERS.PHONE.concat(CONFIG.HEADERS.NAME));
+}
+
+function collectFetchData(sheet, rowIndex, headers) {
+  var data = {};
+  if (!headers) return data;
+  headers.forEach(function(header) {
+    if (!header) return;
+    var value = getFieldValue(sheet, rowIndex, header);
+    if (value) data[normalizeHeaderName(header)] = value;
+  });
+  return data;
+}
+
+function handleWorkflowEvent(sheet, rowIndex, columnHeader, oldValue, newValue) {
+  try {
+    if (rowIndex <= 1) return;
+    var oldText = (oldValue === undefined || oldValue === null) ? '' : oldValue.toString().trim();
+    var newText = (newValue === undefined || newValue === null) ? '' : newValue.toString().trim();
+    Logger.log('[WE] col="' + columnHeader + '" row=' + rowIndex + ' old="' + oldText + '" new="' + newText + '"');
+
+    if (columnHeader === 'FORM_SUBMIT') {
+      var candidate = readCandidateFromRow(sheet, rowIndex);
+      if (!candidate || !candidate.phone) {
+        Logger.log('[WE] Form submit: no phone at row ' + rowIndex);
+        return;
+      }
+      if (!isEligibleNewApplicationRow(sheet, rowIndex)) {
+        Logger.log('[WE] Form submit skipped for row ' + rowIndex + ' because it is not a new eligible row');
+        return;
+      }
+      var message = generateMessage(CONFIG.EVENTS.FORM_SUBMIT, candidate, {});
+      if (!message) return;
+      var queueResult = queueWhatsApp({ candidate: candidate, eventType: CONFIG.EVENTS.FORM_SUBMIT, triggerColumn: 'FORM_SUBMIT', oldText: '', newText: '', message: message });
+      if (queueResult !== false && queueResult !== null && queueResult !== undefined) {
+        markRowQueueMarker(sheet.getName(), rowIndex, CONFIG.EVENTS.FORM_SUBMIT);
+      }
+      return;
+    }
+
+    if (oldText === newText || isEmpty(newText)) {
+      Logger.log('[WE] Skipped: value unchanged or empty');
+      return;
+    }
+
+    if (headerMatchesAliases(columnHeader, CONFIG.HEADERS.COMMENTS)) {
+      Logger.log('[WE] Comments update skipped; no message queued.');
+      return;
+    }
+
+    if (isSilentFormField(columnHeader)) {
+      Logger.log('[WE] Form field update skipped; no message queued for "' + columnHeader + '".');
+      return;
+    }
+
+    var candidate = readCandidateFromRow(sheet, rowIndex);
+
+    if (headerMatchesAliases(columnHeader, CONFIG.HEADERS.RESUME_STATUS) && candidate && candidate.phone) {
+      var resumeEvent = getMappedEventType({ 'selected': CONFIG.EVENTS.FINAL_SELECTED, 'shortlisted': CONFIG.EVENTS.FINAL_SELECTED, 'rejected': CONFIG.EVENTS.RESUME_REJECTED, 'blocklisted': CONFIG.EVENTS.BLOCKLISTED }, newText);
+      if (!resumeEvent) {
+        Logger.log('[WE] Resume Status value not recognized: ' + newText);
+        return;
+      }
+      var resumeHash = newText + '_' + columnHeader;
+      if (isDuplicateMessage(candidate.phone, resumeEvent, rowIndex, resumeHash)) {
+        Logger.log('[WE] Duplicate prevented for Resume Status event: ' + resumeEvent);
+        logMessageEvent(candidate, columnHeader, oldText, newText, resumeEvent, 'DUPLICATE', 'Already sent', '');
+        return;
+      }
+      var resumeMessage = generateMessage(resumeEvent, candidate, { triggerColumn: columnHeader, resumeStatus: newText });
+      if (!resumeMessage) {
+        Logger.log('[WE] No message generated for Resume Status event: ' + resumeEvent);
+        return;
+      }
+      queueWhatsApp({ candidate: candidate, eventType: resumeEvent, triggerColumn: columnHeader, oldText: oldText, newText: newText, message: resumeMessage });
+      markMessageSent(candidate.phone, resumeEvent, rowIndex, resumeHash);
+      logMessageEvent(candidate, columnHeader, oldText, newText, resumeEvent, 'QUEUED', 'Resume Status message queued', resumeMessage);
+      return;
+    }
+
+    if (headerMatchesAliases(columnHeader, CONFIG.HEADERS.REJECTION_REASON) && candidate && candidate.phone && (isRejected(candidate.status) || isRejected(candidate.resume_status)) && !isEmpty(newText)) {
+      if (candidate && candidate.phone) {
+        var queuedNewApp = queueNewApplicationMessage(sheet, rowIndex, candidate, columnHeader, oldText, newText);
+        if (queuedNewApp) {
+          Logger.log('[WE] New application message queued for row ' + rowIndex + ' via ' + columnHeader);
+          return;
+        }
+      }
+    }
+
+    var interviewContext = getInterviewWorkflowContext(columnHeader);
+    if (interviewContext) {
+      if (!candidate) { Logger.log('[WE] Could not read candidate at row ' + rowIndex + ' (interview update)'); return; }
+      if (!candidate.phone) { Logger.log('[WE] No phone for interview update at row ' + rowIndex); logMessageEvent(candidate, columnHeader, oldText, newText, '', 'SKIPPED', 'No phone number', ''); return; }
+
+      var evt = interviewContext.eventType;
+      var fetchFields = interviewContext.fetchFields;
+      var fdObj = collectFetchData(sheet, rowIndex, fetchFields);
+      var valueHash = newText + '_' + columnHeader;
+      if (isDuplicateMessage(candidate.phone, evt, rowIndex, valueHash)) {
+        Logger.log('[WE] Duplicate prevented for interview combined message: ' + evt);
+        logMessageEvent(candidate, columnHeader, oldText, newText, evt, 'DUPLICATE', 'Already sent', '');
+        return;
+      }
+
+      var msg = generateMessage(evt, candidate, fdObj);
+      if (!msg) { Logger.log('[WE] No message generated for interview update event: ' + evt); logMessageEvent(candidate, columnHeader, oldText, newText, evt, 'ERROR', 'Message generation failed', ''); return; }
+      queueWhatsApp({ candidate: candidate, eventType: evt, triggerColumn: columnHeader, oldText: oldText, newText: newText, message: msg });
+      markMessageSent(candidate.phone, evt, rowIndex, valueHash);
+      logMessageEvent(candidate, columnHeader, oldText, newText, evt, 'QUEUED', 'Combined interview message queued', msg);
+      return;
+    }
+
+    var taskContext = getTaskWorkflowContext(columnHeader, newText);
+    if (taskContext) {
+      if (!candidate) { Logger.log('[WE] Could not read candidate at row ' + rowIndex + ' (task update)'); return; }
+      if (!candidate.phone) { Logger.log('[WE] No phone for task update at row ' + rowIndex); logMessageEvent(candidate, columnHeader, oldText, newText, '', 'SKIPPED', 'No phone number', ''); return; }
+
+      var taskEvent = taskContext.eventType;
+      var taskFetchData = collectFetchData(sheet, rowIndex, taskContext.fetchFields);
+      var taskValueHash = newText + '_' + columnHeader;
+      if (isDuplicateMessage(candidate.phone, taskEvent, rowIndex, taskValueHash)) {
+        Logger.log('[WE] Duplicate prevented for task combined message: ' + taskEvent);
+        logMessageEvent(candidate, columnHeader, oldText, newText, taskEvent, 'DUPLICATE', 'Already sent', '');
+        return;
+      }
+
+      var taskMessage = generateMessage(taskEvent, candidate, taskFetchData);
+      if (!taskMessage) { Logger.log('[WE] No task message generated for: ' + taskEvent); logMessageEvent(candidate, columnHeader, oldText, newText, taskEvent, 'ERROR', 'Message generation failed', ''); return; }
+      queueWhatsApp({ candidate: candidate, eventType: taskEvent, triggerColumn: columnHeader, oldText: oldText, newText: newText, message: taskMessage });
+      markMessageSent(candidate.phone, taskEvent, rowIndex, taskValueHash);
+      logMessageEvent(candidate, columnHeader, oldText, newText, taskEvent, 'QUEUED', 'Combined task message queued', taskMessage);
+      return;
+    }
+
+    if (isFeedbackFormColumn(columnHeader)) {
+      if (!candidate) { Logger.log('[WE] Could not read candidate at row ' + rowIndex + ' for feedback-form update.'); return; }
+      if (!candidate.phone) { Logger.log('[WE] No phone for feedback-form update at row ' + rowIndex); return; }
+      if (isEmpty(newText)) { Logger.log('[WE] Feedback form link cleared; skipping queue.'); return; }
+
+      var existingStatusEvent = getStatusEventForValue(candidate.status || newText);
+      if (!existingStatusEvent) {
+        Logger.log('[WE] Feedback form update skipped: no final status set yet for row ' + rowIndex);
+        return;
+      }
+
+      var feedbackFetchData = {};
+      feedbackFetchData[normalizeHeaderName('Feedback Form')] = newText;
+      var feedbackValueHash = existingStatusEvent + '_' + rowIndex + '_' + newText;
+      if (isDuplicateMessage(candidate.phone, existingStatusEvent, rowIndex, feedbackValueHash)) {
+        Logger.log('[WE] Duplicate prevented for combined status+feedback message: ' + existingStatusEvent);
+        logMessageEvent(candidate, columnHeader, oldText, newText, existingStatusEvent, 'DUPLICATE', 'Already sent', '');
+        return;
+      }
+
+      var feedbackMessage = generateMessage(existingStatusEvent, candidate, feedbackFetchData);
+      if (!feedbackMessage) { Logger.log('[WE] No combined status+feedback message generated for: ' + existingStatusEvent); logMessageEvent(candidate, columnHeader, oldText, newText, existingStatusEvent, 'ERROR', 'Message generation failed', ''); return; }
+      queueWhatsApp({ candidate: candidate, eventType: existingStatusEvent, triggerColumn: columnHeader, oldText: oldText, newText: newText, message: feedbackMessage });
+      markMessageSent(candidate.phone, existingStatusEvent, rowIndex, feedbackValueHash);
+      logMessageEvent(candidate, columnHeader, oldText, newText, existingStatusEvent, 'QUEUED', '', feedbackMessage);
+      return;
+    }
+
+    var rule = getWorkflowRule(columnHeader);
+    if (!rule) {
+      Logger.log('[WE] No rule for column "' + columnHeader + '". Queuing generic update notification.');
+      if (!candidate) { Logger.log('[WE] Could not read candidate at row ' + rowIndex + ' for generic queue.'); return; }
+      if (!candidate.phone) { Logger.log('[WE] No phone for generic update at row ' + rowIndex); return; }
+      var genericMessage = generateMessage(CONFIG.EVENTS.DATA_UPDATED, candidate, { triggerColumn: columnHeader, newValue: newText });
+      queueWhatsApp({ candidate: candidate, eventType: CONFIG.EVENTS.DATA_UPDATED, triggerColumn: columnHeader, oldText: oldText, newText: newText, message: genericMessage });
+      markMessageSent(candidate.phone, CONFIG.EVENTS.DATA_UPDATED, rowIndex, newText + '_' + columnHeader);
+      logMessageEvent(candidate, columnHeader, oldText, newText, CONFIG.EVENTS.DATA_UPDATED, 'QUEUED', 'Generic update queued', genericMessage);
+      return;
+    }
+
+    if (!candidate) { Logger.log('[WE] Could not read candidate at row ' + rowIndex); return; }
+    if (!candidate.phone) { Logger.log('[WE] No phone for ' + (candidate.name || 'unknown') + ' row ' + rowIndex); logMessageEvent(candidate, columnHeader, oldText, newText, '', 'SKIPPED', 'No phone number', ''); return; }
+
+    if (rule.fetchFields && !hasRequiredFields(sheet, rowIndex, rule.fetchFields.concat([columnHeader]))) {
+      var missing = getMissingFields(sheet, rowIndex, rule.fetchFields.concat([columnHeader]));
+      Logger.log('[WE] Required fields missing for rule "' + columnHeader + '" at row ' + rowIndex + ': ' + missing.join(', '));
+      logMessageEvent(candidate, columnHeader, oldText, newText, Array.isArray(rule.eventType) ? rule.eventType.join(',') : rule.eventType || '', 'SKIPPED', 'Waiting for required fields: ' + missing.join(', '), '');
+      return;
+    }
+
+    var fetchData = collectFetchData(sheet, rowIndex, rule.fetchFields);
+    fetchData.triggerColumn = columnHeader;
+
+    if (rule.taskStatusBranch) {
+      var taskEvent = getTaskStatusEvent(newText);
+      if (!taskEvent) { Logger.log('[WE] Task status value not recognized: ' + newText); return; }
+      var taskHash = newText + '_' + columnHeader;
+      if (isDuplicateMessage(candidate.phone, taskEvent, rowIndex, taskHash)) {
+        Logger.log('[WE] Duplicate prevented: ' + taskEvent);
+        logMessageEvent(candidate, columnHeader, oldText, newText, taskEvent, 'DUPLICATE', 'Already sent', '');
+        return;
+      }
+      var taskMessage = generateMessage(taskEvent, candidate, fetchData);
+      if (!taskMessage) { Logger.log('[WE] No task message generated for: ' + taskEvent); logMessageEvent(candidate, columnHeader, oldText, newText, taskEvent, 'ERROR', 'Message generation failed', ''); return; }
+      queueWhatsApp({ candidate: candidate, eventType: taskEvent, triggerColumn: columnHeader, oldText: oldText, newText: newText, message: taskMessage });
+      markMessageSent(candidate.phone, taskEvent, rowIndex, taskHash);
+      logMessageEvent(candidate, columnHeader, oldText, newText, taskEvent, 'QUEUED', '', taskMessage);
+      return;
+    }
+
+    var eventTypes = [];
+    if (rule.conditional && rule.eventTypes) {
+      var selectedEvent = getMappedEventType(rule.eventTypes, newText);
+      if (!selectedEvent) {
+        Logger.log('[WE] Conditional column "' + columnHeader + '": value "' + newText + '" not recognized');
+        return;
+      }
+      eventTypes = [selectedEvent];
+    } else if (rule.conditional) {
+      if (isSelected(newText)) {
+        eventTypes = [Array.isArray(rule.eventType) ? rule.eventType[0] : rule.eventType];
+      } else if (isRejected(newText)) {
+        eventTypes = [Array.isArray(rule.eventType) ? rule.eventType[1] : null];
+      } else if (isBlocklisted(newText)) {
+        eventTypes = [Array.isArray(rule.eventType) ? rule.eventType[2] : null];
+      } else {
+        Logger.log('[WE] Conditional column "' + columnHeader + '": value "' + newText + '" not recognized');
+        return;
+      }
+    } else {
+      eventTypes = Array.isArray(rule.eventType) ? rule.eventType : [rule.eventType];
+    }
+
+    eventTypes.forEach(function(eventType) {
+      if (!eventType) return;
+      var valueHash = newText + '_' + columnHeader;
+      if (isDuplicateMessage(candidate.phone, eventType, rowIndex, valueHash)) {
+        Logger.log('[WE] Duplicate prevented: ' + eventType);
+        logMessageEvent(candidate, columnHeader, oldText, newText, eventType, 'DUPLICATE', 'Already sent', '');
+        return;
+      }
+      var message = generateMessage(eventType, candidate, fetchData);
+      if (!message) { Logger.log('[WE] No message generated for: ' + eventType); logMessageEvent(candidate, columnHeader, oldText, newText, eventType, 'ERROR', 'Message generation failed', ''); return; }
+      queueWhatsApp({ candidate: candidate, eventType: eventType, triggerColumn: columnHeader, oldText: oldText, newText: newText, message: message });
+      markMessageSent(candidate.phone, eventType, rowIndex, valueHash);
+      logMessageEvent(candidate, columnHeader, oldText, newText, eventType, 'QUEUED', '', message);
+    });
+  } catch (err) {
+    Logger.log('[WE] handleWorkflowEvent error: ' + err.message);
+    logSystemError('handleWorkflowEvent', err.message, err.stack || '');
+  }
+}
+
+function getMappedEventType(eventTypes, value) {
+  if (!eventTypes) return null;
+  var key = (value || '').toString().trim().toLowerCase();
+  if (eventTypes[key]) return eventTypes[key];
+  for (var mapKey in eventTypes) {
+    var normKey = (mapKey || '').toString().trim().toLowerCase();
+    if (!normKey) continue;
+    if (key === normKey || key.indexOf(normKey) !== -1 || normKey.indexOf(key) !== -1) {
+      return eventTypes[mapKey];
+    }
+  }
+  return null;
+}
+
+function getTaskStatusEvent(value) {
+  var taskValue = (value || '').toString().trim().toLowerCase();
+  if (taskValue === 'assigned') return CONFIG.EVENTS.TASK_STATUS_ASSIGNED;
+  if (taskValue === 'not assigned') return CONFIG.EVENTS.TASK_STATUS_NOT_ASSIGNED;
+  if (taskValue === 'on progress' || taskValue === 'onprogress' || taskValue === 'on-progress') return CONFIG.EVENTS.TASK_STATUS_ON_PROGRESS;
+  if (taskValue === 'completed') return CONFIG.EVENTS.TASK_STATUS_COMPLETED;
+  if (taskValue === 'incomplete' || taskValue === 'incompleted') return CONFIG.EVENTS.TASK_STATUS_INCOMPLETE;
+  return null;
+}
+
+function queueWhatsApp(opts) {
+  var phone = opts.candidate.phone;
+  var rowSource = opts.candidate.rowIndex !== undefined && opts.candidate.rowIndex !== null ? opts.candidate.rowIndex.toString() : (phone || '');
+  var waLink = buildWaLink(phone, opts.message);
+  var result = WhatsApp.queueMessage({ rowSource: rowSource, name: opts.candidate.name, phone: phone, message: opts.message, eventType: opts.eventType, triggerColumn: opts.triggerColumn, oldValue: opts.oldText, newValue: opts.newText, waLink: waLink });
+  Logger.log('[WE] Queued ' + opts.eventType + ' for ' + opts.candidate.name + ' (' + phone + ')');
+  return result;
+}
+
+function generateMessage(eventType, candidate, fetchData) {
+  fetchData = fetchData || {};
+  var name = candidate.name || 'Candidate';
+  var company = CONFIG.COMPANY_NAME;
+  function fd(key) { return fetchData[normalizeHeaderName(key)] || candidate[normalizeHeaderName(key).replace(/ /g, '_')] || ''; }
+  function resolveContactPerson(keys, fallback) {
+    var selections = Array.isArray(keys) ? keys : [keys];
+    for (var i = 0; i < selections.length; i++) {
+      var lookup = (candidate[normalizeHeaderName(selections[i]).replace(/ /g, '_')] || fd(selections[i]) || '').toString().trim();
+      if (lookup) return lookup;
+    }
+    return fallback || '';
+  }
+  try {
+    switch (eventType) {
+      case CONFIG.EVENTS.FORM_SUBMIT:
+        var appliedRole = candidate.position || fd('job you are applying for') || fd('position');
+        var roleText = appliedRole ? ' for the ' + appliedRole + ' role at ' + company : ' to ' + company;
+        return 'Hello ' + name + ',\n\nThank you for applying' + roleText + '.\n\nWe have received your application and our recruitment team is reviewing it carefully.\n\nWe will contact you shortly with the next steps.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_1_SCHEDULE:
+        var inter1Schedule = formatDateTime(candidate.interview_1_dt || fd('interview level 1 schedule'));
+        var inter1Mode = candidate.interview_mode_1 || fd('interview level 1 mode') || 'To be confirmed';
+        var inter1Link = candidate.meeting_link_1 || fd('interview 1 meeting link') || 'Will be shared shortly';
+        var inter1Contact = resolveContactPerson(['contact person', 'contact person 1', 'interview level 1 contact person']);
+        if (!inter1Contact) inter1Contact = 'To be confirmed';
+        return 'Hello ' + name + ',\n\nYour Round 1 interview has been scheduled.\n\n• Date & Time: ' + inter1Schedule + '\n• Mode: ' + inter1Mode + '\n• Meeting Link: ' + inter1Link + '\n• Contact Person: ' + inter1Contact + '\n\nPlease join the meeting on time and keep your camera and microphone ready. If you need any clarification, reply to this message.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_1_NOT_ASSIGNED:
+        return 'Hello ' + name + ',\n\nThis is to inform you that your first-round interview has not been assigned yet.\n\nWe are working to finalise the interviewer and schedule, and we will update you as soon as details are available.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_1_ASSIGNED:
+        return 'Hello ' + name + ',\n\nYour first-round interview has now been assigned.\n\n• Date & Time: ' + formatDateTime(candidate.interview_1_dt) + '\n\nPlease prepare accordingly and be ready for the discussion.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_1_ON_PROGRESS:
+        return 'Hello ' + name + ',\n\nYour first-round interview is currently in progress.\n\nOur team will review the interview and share the next update shortly.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_1_COMPLETED:
+        return 'Hello ' + name + ',\n\nThank you for attending your first-round interview.\n\nOur recruitment team will assess the outcome and notify you of the next steps soon.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_1_INCOMPLETE:
+        return 'Hello ' + name + ',\n\nYour first-round interview is currently marked as incomplete.\n\nPlease contact the Talent Acquisition Team so that we can reschedule or assist you with the next step.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_1_SELECTED:
+        return 'Hello ' + name + ',\n\nCongratulations! You have been shortlisted for the next round of the recruitment process.\n\n• Next step: Round 2 interview\n• Date & Time: ' + formatDateTime(candidate.interview_2_dt) + '\n\nPlease be prepared to discuss your experience and career goals.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_1_REJECTED:
+        return 'Hello ' + name + ',\n\nThank you for participating in the first interview round.\n\nAfter careful review, we are unable to move your application forward at this time.\n\nWe appreciate your interest in ' + company + ' and wish you success in your future career.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_1_BLOCKLISTED:
+        return 'Hello ' + name + ',\n\nYour application has been placed on hold for further review.\n\nPlease contact the Talent Acquisition Team if you require clarification or have any questions.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_2_SCHEDULE:
+        var inter2Schedule = formatDateTime(candidate.interview_2_dt || fd('interview level 2 schedule'));
+        var inter2Mode = candidate.interview_mode_2 || fd('interview level 2 mode') || 'To be confirmed';
+        var inter2Link = candidate.meeting_link_2 || fd('interview 2 meeting link') || 'Will be shared shortly';
+        var inter2Contact = resolveContactPerson(['contact person 2', 'level 2 contact person', 'interview level 2 contact person']);
+        if (!inter2Contact) inter2Contact = 'To be confirmed';
+        return 'Hello ' + name + ',\n\nYour Round 2 interview has been scheduled.\n\n• Date & Time: ' + inter2Schedule + '\n• Mode: ' + inter2Mode + '\n• Meeting Link: ' + inter2Link + '\n• Contact Person: ' + inter2Contact + '\n\nPlease join the meeting on time and prepare for the discussion. If you have any questions, reply to this message.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_2_NOT_ASSIGNED:
+        return 'Hello ' + name + ',\n\nThis is to inform you that your second-round interview has not been assigned yet.\n\nWe will notify you as soon as the interviewer and schedule are confirmed.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_2_ASSIGNED:
+        return 'Hello ' + name + ',\n\nYour second-round interview has been assigned.\n\n• Date & Time: ' + formatDateTime(candidate.interview_2_dt) + '\n\nPlease be prepared and join the meeting promptly.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_2_ON_PROGRESS:
+        return 'Hello ' + name + ',\n\nYour second-round interview is currently in progress.\n\nWe will share the outcome once the review is complete.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_2_COMPLETED:
+        return 'Hello ' + name + ',\n\nThank you for completing your second-round interview.\n\nOur recruitment team will review the outcome and share the next steps soon.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_2_INCOMPLETE:
+        return 'Hello ' + name + ',\n\nYour second-round interview is currently marked as incomplete.\n\nPlease contact the Talent Acquisition Team for guidance on the next steps.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_2_SELECTED:
+        return 'Hello ' + name + ',\n\nCongratulations! You have been shortlisted for the next stage of the recruitment process.\n\nFurther instructions will be shared shortly.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_2_REJECTED:
+        return 'Hello ' + name + ',\n\nThank you for participating in the second interview round.\n\nAfter careful consideration, you were not selected to proceed further.\n\nWe appreciate your interest in ' + company + ' and wish you success in your future career.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_2_BLOCKLISTED:
+        return 'Hello ' + name + ',\n\nYour application has been placed on hold for further review.\n\nPlease contact the Talent Acquisition Team if you need any clarification.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_3_SCHEDULE:
+        return 'Hello ' + name + ',\n\n📞 *Final Technical Interview Scheduled*\n\n� Scheduled:\n' + formatDateTime(candidate.interview_3_dt) + '\n\nPlease be prepared to discuss your task submission, technical approach, and problem-solving experience.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_3_SELECTED:
+      case CONFIG.EVENTS.TASK_ASSIGNMENT:
+        return 'Hello ' + name + ',\n\nAs part of the final evaluation, please find your assigned task below.\n\n🔗 Task Details:\n' + (fd('task detail') || 'Objective\n\nBuild and submit the hosted website link upon completion.') + '\n\nPlease ensure the task is completed and submitted within the given timeline.\n\n🕒 Submission Deadline:\n' + formatDateTime(fd('task dead line') || candidate.task_deadline) + '\n\nIf you have any questions or require clarification, please contact the Talent Acquisition Team.\n\nReply "YES" to confirm within 48 hours or it will be considered as rejected.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.INTERVIEW_ROUND_3_REJECTED:
+        return 'Hello ' + name + ',\n\nThank you for participating in the Level-3 Interview process.\n\nAfter evaluation, you were not selected for the next round.\n\nWe truly appreciate your effort and dedication. We wish you all the best for your future.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.TASK_STATUS_ASSIGNED:
+        var taskDet1 = fd('task_details') || candidate.task_detail || 'Please check the shared assignment details.';
+        var taskDeadline1 = formatDateTime(fd('deadline') || candidate.task_deadline);
+        return 'Hello ' + name + ',\n\nTask Update:\n\n• Task Details: ' + taskDet1 + '\n• Deadline: ' + taskDeadline1 + '\n• Status: Assigned\n\nPlease begin work on the task and share your update once completed. If you have any questions, reply to this message.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.TASK_STATUS_NOT_ASSIGNED:
+        return 'Hello ' + name + ',\n\nYour task assignment is pending and will be shared shortly.\n\n• Status: Not Assigned\n\nWe will notify you once the task details are ready.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.TASK_STATUS_ON_PROGRESS:
+        var taskDet2 = fd('task_details') || candidate.task_detail || 'Please refer to the assigned task details.';
+        var taskDeadline2 = formatDateTime(fd('deadline') || candidate.task_deadline);
+        return 'Hello ' + name + ',\n\nTask Update:\n\n• Task Details: ' + taskDet2 + '\n• Deadline: ' + taskDeadline2 + '\n• Status: In Progress\n\nPlease continue the task and submit it before the deadline. Contact HR if you need any support.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.TASK_STATUS_COMPLETED:
+        var taskDet3 = fd('task_details') || candidate.task_detail || 'Assignment';
+        return 'Hello ' + name + ',\n\nThank you for completing the assigned task.\n\n• Task Details: ' + taskDet3 + '\n• Status: Completed\n\nOur team will review your submission and share the next steps shortly.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.TASK_STATUS_INCOMPLETE:
+        var taskDet4 = fd('task_details') || candidate.task_detail || 'Please review the assignment details shared earlier.';
+        var taskDeadline4 = formatDateTime(fd('deadline') || candidate.task_deadline);
+        return 'Hello ' + name + ',\n\nTask Update:\n\n• Task Details: ' + taskDet4 + '\n• Deadline: ' + taskDeadline4 + '\n• Status: Incomplete\n\nPlease complete the task as soon as possible and update us once done. If you need help, contact the Talent Acquisition Team.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.FINAL_SELECTED:
+        var statusSelected = 'Status: Selected';
+        var feedbackLink = fd('feedback form') || candidate.feedback_form || '';
+        var feedbackSection = feedbackLink ? '\n\nFeedback Form:\n' + feedbackLink : '';
+        var isResumeStatusTrigger = (fd('triggerColumn') || '').toString().trim().toLowerCase() === 'resume status';
+        var selectedGreeting = 'Hello ' + name + ',';
+        var isShortlistedResume = (fd('resumeStatus') || '').toString().trim().toLowerCase() === 'shortlisted';
+        var selectedBody = isShortlistedResume
+          ? 'Your resume has been shortlisted for Interview Level 1.\n\nOur Talent Acquisition Team will share the confirmed interview schedule and next steps with you shortly. Please keep your availability open and reply if you have any questions.'
+          : isResumeStatusTrigger
+            ? 'Your resume has been shortlisted for a role at Shine Craft Technologies. You have been selected for Interview Level 1.\n\nOur Talent Acquisition Team will share the confirmed interview schedule and next steps with you shortly. Please keep your availability open and reply if you have any questions.'
+          : 'We are pleased to inform you that you have been selected for the role at ' + company + '.\n\nOur Talent Acquisition Team will share your offer details, onboarding guidance, and joining instructions shortly.';
+        return selectedGreeting + '\n\n' + selectedBody + '\n\n' + statusSelected + '\n\nPlease confirm your acceptance once you receive the next communication.' + feedbackSection + '\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.BLOCKLISTED:
+        var statusBlocklisted = '⏸️ *Status:* Blocklisted';
+        var blockFeedbackLink = fd('feedback form') || candidate.feedback_form || '';
+        var blockFeedbackSection = blockFeedbackLink ? '\n\n📋 *Feedback Form:*\n' + blockFeedbackLink : '';
+        var isResumeStatusBlock = (fd('triggerColumn') || '').toString().trim().toLowerCase() === 'resume status';
+        var blockPrefix = isResumeStatusBlock ? 'Hello ' + name + ',\n\nThank you for your interest in ' + company + '.\n\nAfter reviewing your resume, we have placed your application on hold for further review.' : 'Hello ' + name + ',\n\nWe have reviewed your application and have placed your profile on hold for further processing.';
+        return blockPrefix + '\n\n' + statusBlocklisted + '\n\nPlease contact the Talent Acquisition Team if you need clarification regarding the status.' + blockFeedbackSection + '\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.DESIGNATION_NOTIFICATION:
+        return 'Hello ' + name + ',\n\nYour role has been updated to *' + (candidate.designation || fd('designation') || 'the new designation') + '* at ' + company + '.\n\nPlease review this update and reply if you have any questions.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.DATA_UPDATED:
+        return 'Hello ' + name + ',\n\nYour record has been updated on the recruitment sheet.\n\nUpdated field: *' + (fetchData.triggerColumn || 'Unknown') + '*\nNew value: *' + (fetchData.newValue || 'N/A') + '*\n\nIf this update is incorrect, please reply here.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.FINAL_REJECTED:
+        var statusRejected = '❌ *Status:* Rejected';
+        var reasonText = fd('reason for rejected') || candidate.reason_for_rejected || '';
+        var reasonSection = reasonText ? '\n\n*Reason for rejection:*\n' + reasonText : '';
+        var isResumeStatusReject = (fd('triggerColumn') || '').toString().trim().toLowerCase() === 'resume status';
+        var rejectPrefix = isResumeStatusReject ? 'Hello ' + name + ',\n\nThank you for sharing your resume with Shine Craft Technologies.' : 'Hello ' + name + ',\n\nThank you for participating in the recruitment process at ' + company + '.';
+        var rejFeedbackLink = fd('feedback form') || candidate.feedback_form || '';
+        var rejFeedbackSection = rejFeedbackLink ? '\n\n📋 *Feedback Form:*\n' + rejFeedbackLink + '\n\nPlease share your feedback to help us improve.' : '';
+        var resumeRejectBody = isResumeStatusReject
+          ? 'After careful review, your profile has not been shortlisted for the first-round interview.'
+          : 'After careful consideration, you were not selected for the role.';
+        return rejectPrefix + '\n\n' + resumeRejectBody + '\n\n' + statusRejected + reasonSection + '\n\nWe appreciate your effort, time, and interest. Continue strengthening your skills and we wish you success ahead.' + rejFeedbackSection + '\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.RESUME_REJECTED:
+        var resumeRejectedReason = fd('reason for rejected') || candidate.reason_for_rejected || '';
+        var resumeRejectedReasonSection = resumeRejectedReason ? '\n\n*Reason for rejection:*\n' + resumeRejectedReason : '';
+        return 'Hello ' + name + ',\n\nThank you for sharing your resume with ' + company + '.\n\nAfter careful review, your resume has not been shortlisted for Interview Level 1.\n\n❌ *Resume Status:* Rejected' + resumeRejectedReasonSection + '\n\nWe appreciate your time and interest. We wish you success in your future career.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.FEEDBACK_FORM:
+        return 'Hello ' + name + ',\n\nPlease complete the feedback form for our recruitment process:\n\n' + (fd('feedback form') || candidate.feedback_form || 'Link will be shared shortly') + '\n\nYour response helps us improve our process.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.TASK_REMINDER_1DAY:
+        return 'Hello ' + name + ',\n\n⚠️ *Reminder:* Your assigned task deadline is *tomorrow*.\n\n🕒 Deadline:\n' + formatDateTime(candidate.task_deadline) + '\n\nPlease submit on time.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      case CONFIG.EVENTS.TASK_REMINDER_SAME_DAY:
+        return 'Hello ' + name + ',\n\n🔔 *Final Reminder:* Your task is due *today*!\n\n🕒 Deadline:\n' + formatDateTime(candidate.task_deadline) + '\n\nPlease submit before the deadline.\n\nRegards,\nTalent Acquisition Team\n' + company;
+      default:
+        Logger.log('[WE] Unknown event: ' + eventType);
+        return null;
+    }
+  } catch (err) {
+    Logger.log('[WE] generateMessage error for ' + eventType + ': ' + err.message);
+    return null;
+  }
+}
+
+// ============================================================
+// WhatsApp queue implementation
+// ============================================================
+var WA_QUEUE_HEADERS = ['QueueId','CreatedAt','RowSource','Name','Phone','Message','EventType','TriggerColumn','OldValue','NewValue','Status','Attempts','FailedReason','SentAt'];
+
+function _waGetSpreadsheet() {
+  return getSpreadsheet();
+}
+
+function _waGetQueueSheet() {
+  var ss = _waGetSpreadsheet();
+  var name = CONFIG.QUEUE_SHEET || 'Message Queue';
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) sheet = ss.insertSheet(name);
+  return sheet;
+}
+
+function ensureQueueSheet() {
+  var sheet = _waGetQueueSheet();
+  var existing = sheet.getLastRow() > 0 ? sheet.getRange(1,1,1,WA_QUEUE_HEADERS.length).getValues()[0] : [];
+  var normEx = existing.map(function(h){ return (h||'').toString().trim().toLowerCase(); }).join('|');
+  var normEx2 = WA_QUEUE_HEADERS.map(function(h){ return h.toLowerCase(); }).join('|');
+  if (normEx !== normEx2) {
+    sheet.clear();
+    sheet.getRange(1,1,1,WA_QUEUE_HEADERS.length).setValues([WA_QUEUE_HEADERS]);
+    sheet.setFrozenRows(1);
+    try { sheet.setColumnWidths(1, WA_QUEUE_HEADERS.length, 160); } catch(e) {}
+  }
+  return sheet;
+}
+
+function _waColIdx(sheet, name) {
+  var headers = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0] || [];
+  for (var i = 0; i < headers.length; i++) {
+    if ((headers[i]||'').toString().trim().toLowerCase() === name.toLowerCase()) return i + 1;
+  }
+  return -1;
+}
+
+function _waHasDuplicateQueueEntry(sheet, payload) {
+  var rowSource = (payload.rowSource || payload.rowIndex || '').toString();
+  var eventType = (payload.eventType || '').toString();
+  var message   = (payload.message || '').toString().trim();
+  if (!rowSource || !eventType || !message) return false;
+
+  var rowSourceIdx = _waColIdx(sheet, 'RowSource') - 1;
+  var eventTypeIdx = _waColIdx(sheet, 'EventType') - 1;
+  var statusIdx    = _waColIdx(sheet, 'Status') - 1;
+  var messageIdx   = _waColIdx(sheet, 'Message') - 1;
+  if (rowSourceIdx < 0 || eventTypeIdx < 0 || statusIdx < 0 || messageIdx < 0) return false;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return false;
+
+  var rows = sheet.getRange(2, 1, lastRow - 1, WA_QUEUE_HEADERS.length).getValues();
+  for (var i = 0; i < rows.length; i++) {
+    var rs = (rows[i][rowSourceIdx] || '').toString();
+    var ev = (rows[i][eventTypeIdx] || '').toString();
+    var st = (rows[i][statusIdx] || '').toString();
+    var msg = (rows[i][messageIdx] || '').toString();
+    if (rs === rowSource && ev === eventType && msg === message && (st === 'PENDING' || st === 'QUEUED' || st === 'SENT')) {
+      Logger.log('[WA] Skipped duplicate queue entry for row=' + rowSource + ' event=' + eventType + ' status=' + st);
+      return true;
+    }
+  }
+  return false;
+}
+
+function queueMessage(payload) {
+  var sheet = ensureQueueSheet();
+
+  // DUPLICATE CHECK: Prevent queuing the same message twice for the same row/event/message.
+  if (_waHasDuplicateQueueEntry(sheet, payload)) {
+    return 'DUPLICATE_QUEUE_EXISTS';
+  }
+
+  // DUPLICATE CHECK: Prevent queuing the same message twice within 10 seconds
+  var checkKey = 'QUEUE_RECENT_' + (payload.phone || '') + '_' + (payload.eventType || '') + '_' + (payload.rowSource || '');
+  var props = PropertiesService.getScriptProperties();
+  var lastQueueTime = props.getProperty(checkKey);
+  var now = Date.now();
+  
+  if (lastQueueTime && (now - Number(lastQueueTime)) < 10000) {
+    Logger.log('[WA] Skipped duplicate queue: phone=' + payload.phone + ' eventType=' + payload.eventType + ' (within 10 seconds)');
+    return 'DUPLICATE_SKIPPED';
+  }
+  props.setProperty(checkKey, now.toString());
+  
+  var id = 'Q' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+  var map = {
+    QueueId:       id,
+    CreatedAt:     new Date().toISOString(),
+    RowSource:     (payload.rowSource || payload.rowIndex || '').toString(),
+    Name:          payload.name          || '',
+    Phone:         payload.phone         || '',
+    Message:       payload.message       || '',
+    EventType:     payload.eventType     || '',
+    TriggerColumn: payload.triggerColumn || '',
+    OldValue:      payload.oldValue      || '',
+    NewValue:      payload.newValue      || '',
+    Status:        'PENDING',
+    Attempts:      0,
+    FailedReason:  '',
+    SentAt:        ''
+  };
+  sheet.appendRow(WA_QUEUE_HEADERS.map(function(h){ return map[h] !== undefined ? map[h] : ''; }));
+  Logger.log('[WA] Queued ' + id + ' phone=' + (payload.phone || ''));
+  return id;
+}
+
+function getPendingMessages(limit) {
+  var sheet = ensureQueueSheet();
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+  var rows = sheet.getRange(2,1,lastRow-1,WA_QUEUE_HEADERS.length).getValues();
+  var statusIdx = _waColIdx(sheet,'Status') - 1;
+  var out = [];
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var s = (r[statusIdx] || '').toString().trim();
+    if (s === 'PENDING' || s === 'QUEUED') {
+      out.push({ queueId: r[0], createdAt: r[1], rowSource: r[2], name: r[3], phone: r[4], message: r[5], eventType: r[6], status: r[10], attempts: Number(r[11] || 0) });
+      if (limit && out.length >= limit) break;
+    }
+  }
+  return out;
+}
+
+function _waFindRow(sheet, queueId) {
+  var idIdx = _waColIdx(sheet, 'QueueId');
+  if (idIdx < 0) return -1;
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return -1;
+  var vals = sheet.getRange(2, idIdx, lastRow - 1, 1).getValues();
+  for (var i = 0; i < vals.length; i++) { if ((vals[i][0] || '') === queueId) return i + 2; }
+  return -1;
+}
+
+function markMessageAsSent(queueId) {
+  var sheet = ensureQueueSheet();
+  var rowNum = _waFindRow(sheet, queueId);
+  if (rowNum < 2) return false;
+  sheet.getRange(rowNum, _waColIdx(sheet,'Status')).setValue('SENT');
+  sheet.getRange(rowNum, _waColIdx(sheet,'SentAt')).setValue(new Date().toISOString());
+  return true;
+}
+
+function markMessageAsQueued(queueId) {
+  var sheet = ensureQueueSheet();
+  var rowNum = _waFindRow(sheet, queueId);
+  if (rowNum < 2) return false;
+  sheet.getRange(rowNum, _waColIdx(sheet,'Status')).setValue('QUEUED');
+  return true;
+}
+
+function markMessageAsFailed(queueId, reason) {
+  var sheet = ensureQueueSheet();
+  var rowNum = _waFindRow(sheet, queueId);
+  if (rowNum < 2) return false;
+  var attCol = _waColIdx(sheet,'Attempts');
+  var failCol = _waColIdx(sheet,'FailedReason');
+  sheet.getRange(rowNum, _waColIdx(sheet,'Status')).setValue('FAILED');
+  if (attCol > 0) {
+    var cur = Number(sheet.getRange(rowNum, attCol).getValue() || 0);
+    sheet.getRange(rowNum, attCol).setValue(cur + 1);
+  }
+  if (failCol > 0) sheet.getRange(rowNum, failCol).setValue(reason || 'Unknown');
+  return true;
+}
+
+function countQueueStatus(status) {
+  var sheet = ensureQueueSheet();
+  var statusCol = _waColIdx(sheet,'Status');
+  if (statusCol < 0) return 0;
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return 0;
+  var vals = sheet.getRange(2, statusCol, lastRow - 1, 1).getValues();
+  var c = 0;
+  for (var i = 0; i < vals.length; i++) { if ((vals[i][0] || '') === status) c++; }
+  return c;
+}
+
+var WhatsApp = {
+  ensureQueueSheet: ensureQueueSheet,
+  queueMessage: queueMessage,
+  getPendingMessages: getPendingMessages,
+  markMessageAsQueued: markMessageAsQueued,
+  markMessageAsSent: markMessageAsSent,
+  markMessageAsFailed: markMessageAsFailed,
+  countQueueStatus: countQueueStatus
+};
+
+function doGet(e) {
+  try {
+    var action = e && e.parameter && e.parameter.action ? e.parameter.action : '';
+    var limit = e && e.parameter && e.parameter.limit ? Number(e.parameter.limit) : undefined;
+    var api = WhatsApp;
+    if (action === 'getPending') {
+      var fn = api.getPendingMessages;
+      if (typeof fn !== 'function') return buildResponse({ success: false, error: 'getPending handler not found' });
+      var messages = typeof limit === 'number' ? fn.call(api, limit) : fn.call(api);
+      Logger.log('[DoGet] getPending -> count=' + (messages && messages.length ? messages.length : 0));
+      return buildResponse({ success: true, data: messages });
+    }
+    if (action === 'getDashboard') {
+      var countFn = api.countQueueStatus;
+      return buildResponse({ success: true, data: { totalPending: countFn.call(api, 'PENDING'), totalSent: countFn.call(api, 'SENT'), totalFailed: countFn.call(api, 'FAILED') } });
+    }
+    return buildResponse({ success: false, error: 'Unknown action' });
+  } catch (err) {
+    return buildResponse({ success: false, error: err && err.message ? err.message : String(err) });
+  }
+}
+
+function doPost(e) {
+  try {
+    var body = {};
+    var bodyStr = e && e.postData && e.postData.contents ? e.postData.contents : '{}';
+    try {
+      body = JSON.parse(bodyStr || '{}');
+    } catch (_) {
+      body = {};
+    }
+
+    var action = '';
+    if (body && typeof body === 'object') {
+      action = body.action || body.type || body.event || body.command || '';
+    }
+    if (!action && e && e.parameter && e.parameter.action) {
+      action = e.parameter.action;
+    }
+    action = String(action || '').trim();
+
+    var api = WhatsApp;
+    if (action === 'markSent') {
+      var fn = api.markMessageAsSent;
+      if (typeof fn !== 'function') return buildResponse({ success: false, error: 'markSent handler not found' });
+      fn.call(api, body.queueId || body.id || e.parameter.queueId || '');
+      return buildResponse({ success: true });
+    }
+    if (action === 'markQueued') {
+      var fnq = api.markMessageAsQueued;
+      if (typeof fnq !== 'function') return buildResponse({ success: false, error: 'markQueued handler not found' });
+      fnq.call(api, body.queueId || body.id || e.parameter.queueId || '');
+      return buildResponse({ success: true });
+    }
+    if (action === 'markFailed') {
+      var fn2 = api.markMessageAsFailed;
+      if (typeof fn2 !== 'function') return buildResponse({ success: false, error: 'markFailed handler not found' });
+      fn2.call(api, body.queueId || body.id || e.parameter.queueId || '', body.reason || e.parameter.reason || 'Unknown error');
+      return buildResponse({ success: true });
+    }
+    return buildResponse({ success: false, error: 'Unknown action: ' + action });
+  } catch (err) {
+    return buildResponse({ success: false, error: err && err.message ? err.message : String(err) });
+  }
+}
+
+function buildResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ============================================================
+// Shared utilities
+// ============================================================
+function getSpreadsheet() {
+  if (CONFIG && CONFIG.SPREADSHEET_ID) {
+    return SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  }
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+function findExistingDataSheet() {
+  var ss = getSpreadsheet();
+  var sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    var sheet = sheets[i];
+    if (isDataSheet(sheet)) return sheet;
+  }
+  return null;
+}
+
+function getDataSheet() {
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName(CONFIG.DATA_SHEET);
+  if (sheet) return sheet;
+  sheet = findExistingDataSheet();
+  if (sheet) {
+    Logger.log('[Utils] DATA_SHEET "' + CONFIG.DATA_SHEET + '" not found. Using existing sheet "' + sheet.getName() + '".');
+    CONFIG.DATA_SHEET = sheet.getName();
+    return sheet;
+  }
+  sheet = ss.insertSheet(CONFIG.DATA_SHEET);
+  Logger.log('[Utils] Auto-created data sheet: ' + CONFIG.DATA_SHEET);
+  return sheet;
+}
+
+function getSheet(name) {
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) { sheet = ss.insertSheet(name); Logger.log('[Utils] Auto-created sheet: ' + name); }
+  return sheet;
+}
+
+function normalizeHeaderName(h) {
+  return (h || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function getHeaderMapping(sheet) {
+  if (!sheet) return {};
+  var lastCol = sheet.getLastColumn();
+  if (lastCol < 1) return {};
+  var row = sheet.getRange(1,1,1,lastCol).getValues()[0] || [];
+  var map = {};
+  for (var i=0; i<row.length; i++) {
+    var raw = (row[i] || '').toString().trim();
+    if (!raw) continue;
+    map[raw] = i + 1;
+    map[normalizeHeaderName(raw)] = i + 1;
+  }
+  return map;
+}
+
+function getColumnIndexByHeader(sheet, headerOrAliases) {
+  var map = getHeaderMapping(sheet);
+  var aliases = Array.isArray(headerOrAliases) ? headerOrAliases : [headerOrAliases];
+  for (var j=0; j<aliases.length; j++) {
+    var k = (aliases[j] || '').toString().trim();
+    if (map[k]) return map[k];
+    if (map[normalizeHeaderName(k)]) return map[normalizeHeaderName(k)];
+  }
+  return null;
+}
+
+function normalizePhone(raw) {
+  if (!raw) return '';
+  var digits = raw.toString().replace(/\D/g, '').replace(/^0+/, '');
+  if (digits.length < 7) return '';
+  if (digits.length === 10) return CONFIG.COUNTRY_CODE + digits;
+  if (digits.length === 12 && digits.startsWith('91')) return '+' + digits;
+  if (digits.length >= 7 && digits.length <= 15) return '+' + digits;
+  return '';
+}
+
+function buildWaLink(phone, message) {
+  if (!phone) return '';
+  var cleaned = phone.toString().replace(/\D/g, '');
+  return 'https://web.whatsapp.com/send?phone=' + encodeURIComponent(cleaned) + '&text=' + encodeURIComponent(message || '');
+}
+
+function readCandidateFromRow(sheet, rowIndex) {
+  try {
+    var lastCol = Math.max(sheet.getLastColumn(), 1);
+    var rowData = sheet.getRange(rowIndex,1,1,lastCol).getValues()[0] || [];
+    function get(key) {
+      var idx = getColumnIndexByHeader(sheet, CONFIG.HEADERS[key] || [key]);
+      return idx ? (rowData[idx-1] || '').toString().trim() : '';
+    }
+    var candidate = {
+      rowIndex: rowIndex,
+      name: get('NAME'),
+      phone: normalizePhone(get('PHONE')),
+      email: get('EMAIL'),
+      interview_1_dt: get('INTERVIEW_1_DT'),
+      interview_2_dt: get('INTERVIEW_2_DT'),
+      interview_3_dt: get('INTERVIEW_3_DT'),
+      meeting_link_1: get('MEETING_LINK_1'),
+      meeting_link_2: get('MEETING_LINK_2'),
+      contact_person: get('CONTACT_PERSON'),
+      contact_person_1: get('CONTACT_PERSON'),
+      contact_person_2: get('CONTACT_PERSON_2'),
+      interview_mode_1: get('INTERVIEW_MODE_1'),
+      interview_mode_2: get('INTERVIEW_MODE_2'),
+      position: get('POSITION'),
+      task_detail: get('TASK_DETAIL'),
+      task_deadline: get('TASK_DEADLINE'),
+      task_status: get('TASK_STATUS'),
+      designation: get('DESIGNATION'),
+      feedback_form: get('FEEDBACK_FORM'),
+      reason_for_rejected: get('REJECTION_REASON'),
+      comments: get('COMMENTS'),
+      status: get('STATUS'),
+      resume_status: get('RESUME_STATUS')
+    };
+    if (!candidate.phone) { Logger.log('[Utils] Row ' + rowIndex + ': phone empty after normalise. Raw="' + get('PHONE') + '"'); }
+    return candidate;
+  } catch (err) {
+    Logger.log('[Utils] readCandidateFromRow row=' + rowIndex + ': ' + err.message);
+    return null;
+  }
+}
+
+function logSystemError(functionName, message, stack) {
+  try {
+    var sheet = getSheet(CONFIG.LOG_SHEET);
+    var headers = ['Timestamp','Function','Row','Candidate','Phone','ErrorMessage','StackTrace'];
+    if (sheet.getLastRow() < 1) { sheet.getRange(1,1,1,headers.length).setValues([headers]); sheet.setFrozenRows(1); }
+    sheet.appendRow([new Date(), functionName || 'Unknown', '', '', '', message || '', stack || '']);
+  } catch (err) { Logger.log('[Utils] logSystemError failed: ' + err.message); }
+}
+
+function logMessageEvent(candidate, triggerColumn, oldValue, newValue, eventType, status, reason, message) {
+  try {
+    var sheet = getSheet(CONFIG.LOG_SHEET);
+    var headers = ['Timestamp','Function','Row','Candidate','Phone','TriggerColumn','OldValue','NewValue','EventType','Status','Reason','Message'];
+    if (sheet.getLastRow() < 1) { sheet.getRange(1,1,1,headers.length).setValues([headers]); sheet.setFrozenRows(1); }
+    sheet.appendRow([new Date(), 'messageEvent', candidate && candidate.rowIndex ? candidate.rowIndex : '', candidate && candidate.name ? candidate.name : '', candidate && candidate.phone ? candidate.phone : '', triggerColumn || '', oldValue || '', newValue || '', eventType || '', status || '', reason || '', message || '']);
+  } catch (err) { Logger.log('[Utils] logMessageEvent failed: ' + err.message); }
+}
+
+function isSelected(value) {
+  var t = (value || '').toString().trim().toLowerCase();
+  if (!t) return false;
+  // Exact match with any selected keyword
+  if (CONFIG.DROPDOWNS.SELECTED.some(function(v){ return v.toLowerCase() === t; })) return true;
+  // Match when any selected keyword appears anywhere in the value (handles composite values)
+  return CONFIG.DROPDOWNS.SELECTED.some(function(v){ return t.indexOf(v.toLowerCase()) !== -1; });
+}
+
+function isRejected(value) {
+  var t = (value || '').toString().trim().toLowerCase();
+  if (!t) return false;
+  // Exact match with any rejected keyword
+  if (CONFIG.DROPDOWNS.REJECTED.some(function(v){ return v.toLowerCase() === t; })) return true;
+  // Match when any rejected keyword appears anywhere in the value
+  return CONFIG.DROPDOWNS.REJECTED.some(function(v){ return t.indexOf(v.toLowerCase()) !== -1; });
+}
+
+function isBlocklisted(value) {
+  var t = (value || '').toString().trim().toLowerCase();
+  if (!t) return false;
+  return t === 'blocklisted' || t.indexOf('block') !== -1;
+}
+
+function isEmpty(value) {
+  return value === null || value === undefined || value.toString().trim() === '';
+}
+
+function formatDateTime(value) {
+  if (isEmpty(value)) return 'TBD';
+  try {
+    var d = value instanceof Date ? value : new Date(value);
+    if (isNaN(d.getTime())) return value.toString();
+    return Utilities.formatDate(d, Session.getScriptTimeZone(), 'dd MMM yyyy, hh:mm a');
+  } catch (_) { return value.toString(); }
+}
+
+function buildCacheKey(phone, eventType, rowIndex, valueHash) {
+  var raw = phone + '_' + eventType + '_' + rowIndex + '_' + (valueHash || '');
+  return (CONFIG.CACHE_PREFIX + raw).substring(0, 240);
+}
+
+function isDuplicateMessage(phone, eventType, rowIndex, valueHash) {
+  var key = buildCacheKey(phone, eventType, rowIndex, valueHash);
+  var val = PropertiesService.getScriptProperties().getProperty(key);
+  if (!val) return false;
+  var ageHours = (Date.now() - Number(val)) / 3600000;
+  return ageHours < CONFIG.CACHE_EXPIRY_HOURS;
+}
+
+function markMessageSent(phone, eventType, rowIndex, valueHash) {
+  var key = buildCacheKey(phone, eventType, rowIndex, valueHash);
+  PropertiesService.getScriptProperties().setProperty(key, Date.now().toString());
+}
+
